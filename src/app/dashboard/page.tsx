@@ -1,0 +1,206 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { db } from "@/lib/db";
+import {
+  Users,
+  TrendingUp,
+  Mail,
+  DollarSign,
+  ArrowUpRight,
+  Plus,
+} from "lucide-react";
+
+export default async function DashboardPage() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  const user = await db.user.findUnique({
+    where: { clerkId: userId },
+    include: {
+      waitlists: {
+        include: {
+          leads: {
+            select: {
+              id: true,
+              segment: true,
+              status: true,
+              score: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+
+  if (!user) redirect("/sign-in");
+
+  const waitlists = user.waitlists;
+
+  const totalLeads = waitlists.reduce((sum, w) => sum + w.totalLeads, 0);
+  const totalHot = waitlists.reduce(
+    (sum, w) => sum + w.leads.filter((l) => l.segment === "HOT").length,
+    0
+  );
+  const totalWarm = waitlists.reduce(
+    (sum, w) => sum + w.leads.filter((l) => l.segment === "WARM").length,
+    0
+  );
+  const totalCold = waitlists.reduce(
+    (sum, w) => sum + w.leads.filter((l) => l.segment === "COLD").length,
+    0
+  );
+
+  const contacted = waitlists.reduce(
+    (sum, w) =>
+      sum + w.leads.filter((l) => l.status !== "UNCONTACTED").length,
+    0
+  );
+  const replied = waitlists.reduce(
+    (sum, w) => sum + w.leads.filter((l) => l.status === "REPLIED" || l.status === "INTERESTED" || l.status === "PAID").length,
+    0
+  );
+  const paid = waitlists.reduce(
+    (sum, w) => sum + w.leads.filter((l) => l.status === "PAID").length,
+    0
+  );
+
+  const stats = [
+    {
+      label: "Total Leads",
+      value: totalLeads,
+      icon: Users,
+      color: "text-slate-700",
+    },
+    {
+      label: "Hot Leads",
+      value: totalHot,
+      icon: TrendingUp,
+      color: "text-red-600",
+      sub: totalLeads > 0 ? `${Math.round((totalHot / totalLeads) * 100)}%` : "0%",
+    },
+    {
+      label: "Contacted",
+      value: contacted,
+      icon: Mail,
+      color: "text-blue-600",
+      sub: totalLeads > 0 ? `${Math.round((contacted / totalLeads) * 100)}%` : "0%",
+    },
+    {
+      label: "Paid",
+      value: paid,
+      icon: DollarSign,
+      color: "text-green-600",
+      sub: totalLeads > 0 ? `${Math.round((paid / totalLeads) * 100)}%` : "0%",
+    },
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-slate-600 mt-1">
+            {waitlists.length} waitlist{waitlists.length !== 1 ? "es" : ""} &middot;{" "}
+            {user.plan === "FREE"
+              ? "Free tier"
+              : user.plan === "PRO"
+              ? "Pro plan"
+              : user.plan === "PRO_PLUS"
+              ? "Pro+ plan"
+              : "Lifetime"}
+          </p>
+        </div>
+        <Link href="/upload" className="btn-primary flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          New Waitlist
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {stats.map((stat) => (
+          <div key={stat.label} className="card">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-slate-600">{stat.label}</span>
+              <stat.icon className={`w-4 h-4 ${stat.color}`} />
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-3xl font-bold text-slate-900">
+                {stat.value}
+              </span>
+              {stat.sub && (
+                <span className="text-sm text-slate-500 mb-1">{stat.sub}</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-6 flex gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <span className="text-sm text-slate-600">Hot ({totalHot})</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-amber-500" />
+          <span className="text-sm text-slate-600">Warm ({totalWarm})</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <span className="text-sm text-slate-600">Cold ({totalCold})</span>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-bold text-slate-900 mb-4">Recent Waitlists</h2>
+
+      {waitlists.length === 0 ? (
+        <div className="card text-center py-12">
+          <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-600 mb-4">No waitlists yet</p>
+          <Link href="/upload" className="btn-primary">
+            Upload your first waitlist
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {waitlists.map((waitlist) => (
+            <Link
+              key={waitlist.id}
+              href={
+                waitlist.status === "COMPLETED"
+                  ? `/results/${waitlist.id}`
+                  : `/processing/${waitlist.id}`
+              }
+              className="card flex items-center justify-between hover:border-slate-300 transition-colors"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-slate-900">{waitlist.name}</h3>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      waitlist.status === "COMPLETED"
+                        ? "bg-green-100 text-green-700"
+                        : waitlist.status === "PROCESSING"
+                        ? "bg-blue-100 text-blue-700"
+                        : waitlist.status === "FAILED"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {waitlist.status.toLowerCase()}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500 mt-1">
+                  {waitlist.totalLeads} leads &middot;{" "}
+                  {waitlist.leads.filter((l) => l.segment === "HOT").length} hot
+                </p>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400" />
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

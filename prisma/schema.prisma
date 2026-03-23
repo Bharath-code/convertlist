@@ -1,0 +1,134 @@
+// Learn about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  clerkId   String     @unique
+  email     String     @unique
+  plan      Plan       @default(FREE)
+  planExpiry DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  waitlists Waitlist[]
+}
+
+model Waitlist {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  totalLeads     Int      @default(0)
+  processedLeads Int      @default(0)
+  status         ProcessingStatus @default(PENDING)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  leads          Lead[]
+  sequences      Sequence[]
+}
+
+model Lead {
+  id           String    @id @default(cuid())
+  waitlistId  String
+  waitlist     Waitlist @relation(fields: [waitlistId], references: [id], onDelete: Cascade)
+  email       String
+  name        String?
+  company     String?
+  signupNote  String?
+  source      String?
+  createdAt   DateTime?
+  importedAt  DateTime  @default(now())
+  score       Int?
+  confidence  Confidence?
+  reason      String?
+  segment     Segment?
+  status      LeadStatus @default(UNCONTACTED)
+  sequenceId  String?
+  sequence    Sequence? @relation(fields: [sequenceId], references: [id])
+  replyForwarder String? @unique
+  statusHistory LeadStatusHistory[]
+  updatedAt   DateTime  @updatedAt
+
+  @@index([waitlistId])
+  @@index([email])
+}
+
+model Sequence {
+  id         String   @id @default(cuid())
+  waitlistId String
+  waitlist   Waitlist @relation(fields: [waitlistId], references: [id], onDelete: Cascade)
+  name       String
+  leads      Lead[]
+  steps      SequenceStep[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([waitlistId])
+}
+
+model SequenceStep {
+  id         String   @id @default(cuid())
+  sequenceId String
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  order      Int
+  subject    String
+  body       String
+  delayDays  Int      @default(0)
+  variant    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([sequenceId])
+}
+
+model LeadStatusHistory {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStatus LeadStatus?
+  toStatus  LeadStatus
+  changedAt DateTime @default(now())
+
+  @@index([leadId])
+}
+
+enum Plan {
+  FREE
+  PRO
+  PRO_PLUS
+  LIFETIME
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum Confidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Segment {
+  HOT
+  WARM
+  COLD
+}
+
+enum LeadStatus {
+  UNCONTACTED
+  CONTACTED
+  REPLIED
+  INTERESTED
+  PAID
+}
