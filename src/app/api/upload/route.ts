@@ -10,6 +10,8 @@ const PLAN_LEAD_LIMITS: Record<string, number> = {
   LIFETIME: Infinity,
 };
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
@@ -42,6 +44,14 @@ export async function POST(req: Request) {
       const file = formData.get("file") as File | null;
       if (!file) {
         return NextResponse.json({ error: "CSV file required" }, { status: 400 });
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: "File too large. Maximum size is 2MB." },
+          { status: 400 }
+        );
       }
 
       const text = await file.text();

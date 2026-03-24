@@ -1,31 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-
-function verifySignature(body: string, signature: string | null): boolean {
-  if (!signature || !process.env.DODO_WEBHOOK_SECRET) return false;
-  const encoder = new TextEncoder();
-  const key = encoder.encode(process.env.DODO_WEBHOOK_SECRET);
-  crypto.subtle
-    .importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
-    .then((cryptoKey) =>
-      crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(body))
-    )
-    .then((sig) => {
-      const expected = Buffer.from(sig).toString("hex");
-      return expected === signature;
-    });
-  return signature.length > 0;
-}
+import { verifyWebhookSignature } from "@/lib/webhooks/verify-signature";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.text();
-    const signature = req.headers.get("x-dodo-signature");
-
-    if (!verifySignature(body, signature)) {
+    const isValid = await verifyWebhookSignature(req, "dodo");
+    if (!isValid) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
+    const body = await req.text();
     const event = JSON.parse(body);
     const { type, data } = event;
 

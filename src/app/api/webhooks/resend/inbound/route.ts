@@ -1,0 +1,139 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { verifyWebhookSignature } from "@/lib/webhooks/verify-signature";
+
+/**
+ * Resend Inbound Webhook Handler
+ * 
+ * This endpoint receives inbound emails from Resend when someone replies to
+ * the unique reply forwarder addresses (lead_{id}@reply.convertlist.ai).
+ * 
+ * Resend sends a POST request with the email data when an inbound email is received.
+ * Configure this in Resend dashboard:
+ * - Domain: convertlist.ai (or your domain)
+ * - Inbound Route: reply.convertlist.ai
+ * - Forward to: https://your-domain.com/api/webhooks/resend/inbound
+ * 
+ * Security: Webhook signature is verified using RESEND_WEBHOOK_SECRET
+ */
+
+interface ResendInboundEmail {
+  id: string;
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+  text: string;
+  attachments?: Array<{
+    filename: string;
+    size: number;
+    content_type: string;
+    content?: string;
+  }>;
+  headers: Record<string, string>;
+  created_at: string;
+}
+
+export async function POST(req: Request) {
+  try {
+    // Verify webhook signature (optional in development, required in production)
+    if (process.env.RESEND_WEBHOOK_SECRET) {
+      const isValid = await verifyWebhookSignature(req, "resend");
+      if (!isValid) {
+        console.warn("Invalid webhook signature");
+        return NextResponse.json(
+          { error: "Invalid signature" },
+          { status: 401 }
+        );
+      }
+    }
+
+    const body: ResendInboundEmail = await req.json();
+    
+    const { from, to, subject, html, text } = body;
+
+    // Extract the reply forwarder address from the 'to' field
+    const replyAddress = to.find((addr) => addr.includes("reply.convertlist.ai"));
+    
+    if (!replyAddress) {
+      console.log("No reply.convertlist.ai address found in recipients:", to);
+      return NextResponse.json(
+        { error: "No matching reply address found" },
+        { status: 400 }
+      );
+    }
+
+    // Extract lead ID from the reply address (format: lead_{id}@reply.convertlist.ai)
+    const leadIdMatch = replyAddress.match(/lead_(.+)@reply\.convertlist\.ai/);
+    
+    if (!leadIdMatch || !leadIdMatch[1]) {
+      console.log("Could not extract lead ID from reply address:", replyAddress);
+      return NextResponse.json(
+        { error: "Invalid reply address format" },
+        { status: 400 }
+      );
+    }
+
+    const leadId = leadIdMatch[1];
+
+    // Find the lead by ID
+    const lead = await db.lead.findUnique({
+      where: { id: leadId },
+      include: {
+        waitlist: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!lead) {
+      console.log("Lead not found for ID:", leadId);
+      return NextResponse.json(
+        { error: "Lead not found" },
+        { status: 404 }
+      );
+    }
+
+    const prevStatus = lead.status;
+
+    // Update lead status and reply forwarder if not already set
+    await db.$transaction([
+      db.lead.update({
+        where: { id: leadId },
+        data: {
+          status: "REPLIED",
+          replyForwarder: replyAddress,
+        },
+      }),
+      db.leadStatusHistory.create({
+        data: {
+          leadId,
+          fromStatus: prevStatus,
+          toStatus: "REPLIED",
+          changedAt: new Date(body.created_at),
+        },
+      }),
+    ]);
+
+    console.log(`Reply detected for lead ${leadId} (${lead.email}) from ${from}`);
+
+    // Optionally: Send notification to the waitlist owner
+    // This could be implemented as an Inngest event to trigger a notification email
+    // await inngest.send({ name: 'lead.replied', data: { leadId, from, subject } });
+
+    return NextResponse.json({
+      success: true,
+      leadId,
+      from,
+      subject,
+    });
+  } catch (error) {
+    console.error("Resend inbound webhook error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
