@@ -409,6 +409,18 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
           )}
         </button>
       </div>
+
+      {/* Footer */}
+      <footer className="mt-12 pt-6 border-t border-slate-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+          <p>&copy; 2026 ConvertList</p>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="hover:text-slate-700">Privacy</Link>
+            <Link href="/terms" className="hover:text-slate-700">Terms</Link>
+            <a href="mailto:support@convertlist.ai" className="hover:text-slate-700">Contact</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

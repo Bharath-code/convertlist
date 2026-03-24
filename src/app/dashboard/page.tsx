@@ -155,12 +155,71 @@ export default async function DashboardPage() {
       <h2 className="text-xl font-bold text-slate-900 mb-4">Recent Waitlists</h2>
 
       {waitlists.length === 0 ? (
-        <div className="card text-center py-12">
-          <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-600 mb-4">No waitlists yet</p>
-          <Link href="/upload" className="btn-primary">
-            Upload your first waitlist
-          </Link>
+        <div className="max-w-2xl mx-auto">
+          <div className="card text-center py-12 mb-8">
+            <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-600 mb-4">No waitlists yet</p>
+            <Link href="/upload" className="btn-primary">
+              Upload your first waitlist
+            </Link>
+          </div>
+
+          <div className="card border-2 border-dashed border-slate-200">
+            <h3 className="text-lg font-bold text-slate-900 mb-6">
+              Get started in 3 steps
+            </h3>
+
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  1
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-slate-900">Upload your waitlist</h4>
+                  <p className="text-sm text-slate-600 mt-1">
+                    Drop a CSV file or paste emails. We'll parse and deduplicate automatically.
+                  </p>
+                  <Link href="/upload" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+                    Upload now &rarr;
+                  </Link>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 opacity-50">
+                <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  2
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-slate-900">Review AI scores</h4>
+                  <p className="text-sm text-slate-600 mt-1">
+                    Each lead gets scored 0-90 based on domain quality, intent, recency, and source.
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">Hot ≥60 · Warm 35-59 · Cold &lt;35</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 opacity-50">
+                <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  3
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-slate-900">Send personalized outreach</h4>
+                  <p className="text-sm text-slate-600 mt-1">
+                    Generate AI-powered emails for each lead. Export and start converting.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 p-4 bg-slate-50 rounded-lg">
+              <p className="text-sm text-slate-600">
+                <strong>Free plan:</strong> 50 lead analyses, no credit card required.
+              </p>
+              <Link href="/pricing" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+                View pricing &rarr;
+              </Link>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -201,6 +260,18 @@ export default async function DashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="mt-12 pt-6 border-t border-slate-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+          <p>&copy; 2026 ConvertList</p>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="hover:text-slate-700">Privacy</Link>
+            <Link href="/terms" className="hover:text-slate-700">Terms</Link>
+            <a href="mailto:support@convertlist.ai" className="hover:text-slate-700">Contact</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
