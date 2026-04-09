@@ -48,7 +48,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ sequence });
   } catch (error) {
-    console.error("Create sequence error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -79,7 +78,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ sequences });
   } catch (error) {
-    console.error("Fetch sequences error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

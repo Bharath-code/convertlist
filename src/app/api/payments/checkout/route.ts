@@ -4,14 +4,14 @@ import { db } from "@/lib/db";
 
 /**
  * DodoPayments Checkout Integration
- * 
+ *
  * Creates a checkout session and redirects to Dodo's hosted checkout page.
- * 
+ *
  * Setup:
  * 1. Create products in Dodo dashboard:
- *    - price_pro_monthly ($9/mo)
- *    - price_pro_plus_monthly ($29/mo)
- *    - price_lifetime ($49 one-time)
+ *    - price_pro_monthly ($29/mo)
+ *    - price_pro_plus_monthly ($79/mo)
+ *    - price_launch ($97 one-time)
  * 2. Set DODO_PUBLIC_KEY in environment
  * 3. Configure webhook endpoint: /api/webhooks/dodo
  */
@@ -43,8 +43,8 @@ export async function GET(req: Request) {
         priceId: process.env.DODO_PRICE_ID_PRO_PLUS || "price_pro_plus_monthly",
         successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard?upgrade=success`,
       },
-      lifetime: {
-        priceId: process.env.DODO_PRICE_ID_LIFETIME || "price_lifetime",
+      launch: {
+        priceId: process.env.DODO_PRICE_ID_LAUNCH || "price_launch",
         successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard?upgrade=success`,
       },
     };

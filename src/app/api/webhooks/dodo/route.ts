@@ -20,9 +20,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing email" }, { status: 400 });
       }
 
-      let plan: "FREE" | "PRO" | "PRO_PLUS" | "LIFETIME" = "FREE";
-      if (plan_id === "price_lifetime" || lifetime) {
-        plan = "LIFETIME";
+      let plan: "FREE" | "PRO" | "PRO_PLUS" | "LAUNCH" = "FREE";
+      if (plan_id === "price_launch" || lifetime) {
+        plan = "LAUNCH";
       } else if (plan_id === "price_pro_plus" || plan_id === "price_pro_plus_monthly") {
         plan = "PRO_PLUS";
       } else if (plan_id === "price_pro" || plan_id === "price_pro_monthly") {
@@ -30,13 +30,13 @@ export async function POST(req: Request) {
       }
 
       const planExpiry =
-        plan !== "LIFETIME" && plan !== "FREE"
+        plan !== "LAUNCH" && plan !== "FREE"
           ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
           : null;
 
       await db.user.update({
         where: { email: customer_email },
-        data: { plan, planExpiry },
+        data: { plan: plan as any, planExpiry },
       });
 
       return NextResponse.json({ success: true });
@@ -44,7 +44,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Dodo webhook error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

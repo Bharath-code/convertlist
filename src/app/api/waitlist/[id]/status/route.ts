@@ -39,7 +39,6 @@ export async function GET(
       processedLeads: waitlist.processedLeads,
     });
   } catch (error) {
-    console.error("Status poll error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

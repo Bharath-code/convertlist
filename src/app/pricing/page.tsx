@@ -8,9 +8,9 @@ const tiers = [
     name: "Free",
     price: "$0",
     description: "Get started with basic lead scoring",
-    limits: "50 leads",
+    limits: "25 leads",
     features: [
-      "50 lead analyses",
+      "25 lead analyses",
       "CSV upload + paste",
       "Basic scoring (Hot/Warm/Cold)",
       "1 waitlist",
@@ -21,11 +21,11 @@ const tiers = [
   },
   {
     name: "Pro",
-    price: "$9/mo",
+    price: "$29/mo",
     description: "For indie hackers serious about conversions",
-    limits: "2,000 leads",
+    limits: "500 leads",
     features: [
-      "2,000 lead analyses/mo",
+      "500 lead analyses/mo",
       "3-step email sequences",
       "Basic reply detection",
       "Priority processing",
@@ -37,7 +37,7 @@ const tiers = [
   },
   {
     name: "Pro+",
-    price: "$29/mo",
+    price: "$79/mo",
     description: "Unlimited leads and full features",
     limits: "Unlimited leads",
     features: [
@@ -53,8 +53,8 @@ const tiers = [
     highlight: true,
   },
   {
-    name: "Lifetime",
-    price: "$49",
+    name: "Launch",
+    price: "$97",
     description: "One-time payment, forever access",
     limits: "Everything in Pro+",
     features: [
@@ -63,8 +63,8 @@ const tiers = [
       "No monthly fees",
       "Early access to new features",
     ],
-    cta: "Get Lifetime",
-    href: "/api/payments/checkout?plan=lifetime",
+    cta: "Get Launch",
+    href: "/api/payments/checkout?plan=launch",
     highlight: false,
   },
 ];

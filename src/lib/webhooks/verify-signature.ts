@@ -18,7 +18,6 @@ export async function verifyWebhookSignature(
         : process.env.DODO_WEBHOOK_SECRET;
 
     if (!secret) {
-      console.warn(`No webhook secret configured for ${provider}`);
       return false;
     }
 
@@ -27,7 +26,6 @@ export async function verifyWebhookSignature(
     );
 
     if (!signatureHeader) {
-      console.warn(`No signature header found for ${provider}`);
       return false;
     }
 
@@ -49,7 +47,6 @@ export async function verifyWebhookSignature(
 
     return timingSafeEqual(signatureBuffer, expectedBuffer);
   } catch (error) {
-    console.error(`Error verifying ${provider} webhook signature:`, error);
     return false;
   }
 }

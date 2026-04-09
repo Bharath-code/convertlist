@@ -99,11 +99,26 @@ model LeadStatusHistory {
   @@index([leadId])
 }
 
+model ConversionAnalytics {
+  id               String   @id @default(cuid())
+  signalType       String   // "domain_company", "domain_personal", "intent_urgent", "intent_specific", "source_referral", "recency_recent"
+  signalValue      String   // e.g., "company", "personal", "urgent", "specific", "referral", "recent"
+  totalLeads       Int      @default(0)
+  convertedLeads   Int      @default(0)
+  conversionRate   Float    @default(0)
+  sampleSize       Int      @default(0)
+  lastUpdatedAt    DateTime @default(now())
+  createdAt        DateTime @default(now())
+
+  @@unique([signalType, signalValue])
+  @@index([signalType])
+}
+
 enum Plan {
   FREE
   PRO
   PRO_PLUS
-  LIFETIME
+  LAUNCH
 }
 
 enum ProcessingStatus {

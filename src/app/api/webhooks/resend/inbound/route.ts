@@ -56,7 +56,6 @@ export async function POST(req: Request) {
     const replyAddress = to.find((addr) => addr.includes("reply.convertlist.ai"));
     
     if (!replyAddress) {
-      console.log("No reply.convertlist.ai address found in recipients:", to);
       return NextResponse.json(
         { error: "No matching reply address found" },
         { status: 400 }
@@ -67,7 +66,6 @@ export async function POST(req: Request) {
     const leadIdMatch = replyAddress.match(/lead_(.+)@reply\.convertlist\.ai/);
     
     if (!leadIdMatch || !leadIdMatch[1]) {
-      console.log("Could not extract lead ID from reply address:", replyAddress);
       return NextResponse.json(
         { error: "Invalid reply address format" },
         { status: 400 }
@@ -89,7 +87,6 @@ export async function POST(req: Request) {
     });
 
     if (!lead) {
-      console.log("Lead not found for ID:", leadId);
       return NextResponse.json(
         { error: "Lead not found" },
         { status: 404 }
@@ -116,8 +113,6 @@ export async function POST(req: Request) {
         },
       }),
     ]);
-
-    console.log(`Reply detected for lead ${leadId} (${lead.email}) from ${from}`);
 
     // Optionally: Send notification to the waitlist owner
     // This could be implemented as an Inngest event to trigger a notification email

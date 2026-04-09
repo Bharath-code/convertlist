@@ -27,6 +27,10 @@ export default function ProcessingPage({
   useEffect(() => {
     if (!id) return;
 
+    let pollInterval: NodeJS.Timeout | null = null;
+    let pollCount = 0;
+    const maxPolls = 150; // 5 minutes max
+
     const poll = async () => {
       try {
         const res = await fetch(`/api/waitlist/${id}/status`);
@@ -36,17 +40,32 @@ export default function ProcessingPage({
 
         if (data.status === "COMPLETED") {
           router.push(`/results/${id}`);
+          return;
         } else if (data.status === "FAILED") {
           setError("Processing failed. Please try again.");
+          return;
         }
+
+        // Exponential backoff: start at 2s, increase to 5s, then 10s
+        pollCount++;
+        if (pollCount >= maxPolls) {
+          setError("Processing timed out. Please try again.");
+          return;
+        }
+
+        const delay = pollCount < 5 ? 2000 : pollCount < 15 ? 5000 : 10000;
+        
+        if (pollInterval) clearTimeout(pollInterval);
+        pollInterval = setTimeout(poll, delay);
       } catch (e) {
         setError("Failed to load status");
       }
     };
 
     poll();
-    const interval = setInterval(poll, 2000);
-    return () => clearInterval(interval);
+    return () => {
+      if (pollInterval) clearTimeout(pollInterval);
+    };
   }, [id, router]);
 
   if (!status) {

@@ -2,6 +2,7 @@ import { inngest } from "@/lib/inngest/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "@/lib/db";
 import { generateReplyAddress } from "@/lib/email/reply-address";
+import { getLearnedWeights, trackLeadScored } from "@/lib/scoring/conversion-analytics";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -87,7 +88,10 @@ interface LeadInput {
 }
 
 async function scoreLeadBatch(leads: LeadInput[]) {
-  const scored = leads.map((lead) => computeScore(lead));
+  // Get learned weights from conversion analytics
+  const learnedWeights = await getLearnedWeights();
+
+  const scored = leads.map((lead) => computeScore(lead, learnedWeights));
 
   // AI intent classification for signup_notes
   const leadsWithNotes = scored.filter((l) => l.signupNote);
@@ -98,14 +102,14 @@ async function scoreLeadBatch(leads: LeadInput[]) {
         leadsWithNotes[i].intentScore = score;
       });
     } catch (e) {
-      console.error("AI intent classification failed:", e);
+      // AI classification failed, will use fallback estimation
     }
   }
 
-  // Update all leads with reply addresses
+  // Update all leads with reply addresses and track for analytics
   await Promise.all(
-    scored.map((lead) =>
-      db.lead.update({
+    scored.map(async (lead) => {
+      await db.lead.update({
         where: { id: lead.id },
         data: {
           score: lead.totalScore,
@@ -114,8 +118,11 @@ async function scoreLeadBatch(leads: LeadInput[]) {
           segment: lead.segment,
           replyForwarder: generateReplyAddress(lead.id),
         },
-      })
-    )
+      });
+
+      // Track lead scored for conversion analytics
+      await trackLeadScored(lead.id);
+    })
   );
 }
 
@@ -127,7 +134,7 @@ interface ScoredLead extends LeadInput {
   segment: "HOT" | "WARM" | "COLD";
 }
 
-function computeScore(lead: LeadInput): ScoredLead {
+function computeScore(lead: LeadInput, weights: import("@/lib/scoring/conversion-analytics").SignalWeights): ScoredLead {
   const reasons: string[] = [];
   let score = 0;
   let confidence: "HIGH" | "MEDIUM" | "LOW" = "MEDIUM";
@@ -146,30 +153,48 @@ function computeScore(lead: LeadInput): ScoredLead {
     };
   }
 
-  // Domain quality (0-25)
+  // Domain quality (use learned weights)
   const domainScore = computeDomainScore(lead.email);
-  score += domainScore;
-  if (domainScore === 20) reasons.push("company domain");
-  else if (domainScore === 10) reasons.push("personal email");
+  if (domainScore === 20) {
+    score += weights.domainCompany;
+    reasons.push("company domain");
+  } else if (domainScore === 10) {
+    score += weights.domainPersonal;
+    reasons.push("personal email");
+  }
 
-  // Source (0-15)
+  // Source (use learned weights)
   const sourceScore = computeSourceScore(lead.source);
-  score += sourceScore;
-  if (sourceScore === 15) reasons.push("referral");
-  else if (sourceScore === 10) reasons.push("niche community");
+  if (sourceScore === 15) {
+    score += weights.sourceReferral;
+    reasons.push("referral");
+  } else if (sourceScore === 10) {
+    score += 10; // Default for niche community
+    reasons.push("niche community");
+  }
 
-  // Recency (0-20)
+  // Recency (use learned weights)
   const recencyScore = computeRecencyScore(lead.createdAt || lead.importedAt);
-  score += recencyScore;
-  if (recencyScore === 20) reasons.push("recent signup");
-  else if (recencyScore === 15) reasons.push("recent import");
+  if (recencyScore === 20) {
+    score += weights.recencyRecent;
+    reasons.push("recent signup");
+  } else if (recencyScore === 15) {
+    score += 15; // Default for recent import
+    reasons.push("recent import");
+  }
 
-  // Intent (0-30) - set from AI if available
+  // Intent (use learned weights)
   if (lead.signupNote) {
     const intentScore = (lead as ScoredLead).intentScore ?? estimateIntentScore(lead.signupNote);
-    score += intentScore;
-    if (intentScore >= 25) reasons.push("strong problem description");
-    else if (intentScore >= 15) reasons.push("specific use case");
+    if (intentScore >= 25) {
+      score += weights.intentUrgent;
+      reasons.push("strong problem description");
+    } else if (intentScore >= 15) {
+      score += weights.intentSpecific;
+      reasons.push("specific use case");
+    } else {
+      score += intentScore;
+    }
   }
 
   // Confidence based on data completeness
@@ -270,7 +295,7 @@ Return ONLY a JSON array with ${leads.length} numbers, nothing else.`;
       return parsed.map((v: unknown) => Math.max(0, Math.min(30, Number(v) || 0)));
     }
   } catch (e) {
-    console.error("Failed to parse intent scores:", e);
+    // Failed to parse AI response, will use fallback
   }
 
   // Fallback

@@ -87,11 +87,11 @@ export async function POST(req: Request) {
         data: leads.map((lead) => ({
           waitlistId: waitlist.id,
           email: lead.email.toLowerCase().trim(),
-          name: lead.name || null,
-          company: lead.company || null,
-          signupNote: lead.signupNote || null,
-          source: lead.source || "imported",
-          createdAt: lead.createdAt || null,
+          name: lead.name ?? null,
+          company: lead.company ?? null,
+          signupNote: lead.signupNote ?? null,
+          source: lead.source ?? "imported",
+          createdAt: lead.createdAt ? new Date(lead.createdAt) : null,
         })),
       });
 
@@ -167,7 +167,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
   } catch (error) {
-    console.error("Upload error:", error);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

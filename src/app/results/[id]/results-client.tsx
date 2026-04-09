@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   Search,
@@ -83,6 +84,7 @@ export default function ResultsClient({
   top10Percent,
   userPlan = "FREE",
 }: Props) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"HOT" | "WARM" | "COLD">("HOT");
   const [search, setSearch] = useState("");
   const [showTop10, setShowTop10] = useState(false);
@@ -90,13 +92,29 @@ export default function ResultsClient({
   const [showSequenceBuilder, setShowSequenceBuilder] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
 
+  const filteredLeads = useMemo(() => {
+    const source = showTop10 ? hotLeads.slice(0, top10Percent) : getCurrentLeads();
+    if (!search.trim()) return source;
+    const q = search.toLowerCase();
+    return source.filter(
+      (l) =>
+        l.email.toLowerCase().includes(q) ||
+        l.name?.toLowerCase().includes(q) ||
+        l.company?.toLowerCase().includes(q)
+    );
+  }, [showTop10, hotLeads, top10Percent, search, activeTab, warmLeads, coldLeads]);
+
   const exportToCSV = () => {
     const allLeads = [...hotLeads, ...warmLeads, ...coldLeads];
     const headers = ["email", "name", "company", "score", "confidence", "segment", "status", "source", "reason"];
     const csv = [
       headers.join(","),
       ...allLeads.map((lead) =>
-        headers.map((h) => `"${(lead as any)[h]?.replace(/"/g, '""') || ""}"`).join(",")
+        headers.map((h) => {
+          const value = (lead as Record<string, unknown>)[h];
+          const strValue = typeof value === 'string' ? value : String(value ?? '');
+          return `"${strValue.replace(/"/g, '""')}"`;
+        }).join(",")
       ),
     ].join("\n");
 
@@ -136,7 +154,7 @@ export default function ResultsClient({
 
   const bulkMarkStatus = async (newStatus: string) => {
     if (selectedLeads.size === 0) return;
-    
+
     const loadingToast = toast.loading(`Updating ${selectedLeads.size} leads...`);
     try {
       await Promise.all(
@@ -150,29 +168,48 @@ export default function ResultsClient({
       );
       toast.success(`Marked ${selectedLeads.size} leads as ${newStatus}`, { id: loadingToast });
       setSelectedLeads(new Set());
-      setTimeout(() => window.location.reload(), 500);
+      router.refresh();
     } catch {
       toast.error("Failed to update leads", { id: loadingToast });
     }
   };
 
-  const filteredLeads = (() => {
-    const source = showTop10 ? hotLeads.slice(0, top10Percent) : getCurrentLeads();
-    if (!search.trim()) return source;
-    const q = search.toLowerCase();
-    return source.filter(
-      (l) =>
-        l.email.toLowerCase().includes(q) ||
-        l.name?.toLowerCase().includes(q) ||
-        l.company?.toLowerCase().includes(q)
-    );
-  })();
+  const launchInstantlyCampaign = async () => {
+    if (selectedLeads.size === 0) return;
 
-  function getCurrentLeads(): Lead[] {
+    const fromEmail = prompt("Enter your sending email address:");
+    if (!fromEmail) return;
+
+    const loadingToast = toast.loading("Launching Instantly.ai campaign...");
+    try {
+      const res = await fetch("/api/instantly/launch-campaign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          waitlistId: waitlist.id,
+          leadIds: Array.from(selectedLeads),
+          fromEmail,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to launch campaign");
+      }
+
+      const data = await res.json();
+      toast.success(`Campaign launched! ${data.leadsSent} emails queued`, { id: loadingToast });
+      setSelectedLeads(new Set());
+    } catch (error: any) {
+      toast.error(error.message || "Failed to launch campaign", { id: loadingToast });
+    }
+  };
+
+  const getCurrentLeads = (): Lead[] => {
     if (activeTab === "HOT") return hotLeads;
     if (activeTab === "WARM") return warmLeads;
     return coldLeads;
-  }
+  };
 
   const isFreeUser = userPlan === "FREE";
   const nearLimit = isFreeUser && waitlist.totalLeads >= 40;
@@ -246,6 +283,14 @@ export default function ResultsClient({
                 className="text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded"
               >
                 Interested
+              </button>
+              <div className="w-px h-4 bg-slate-600 mx-1" />
+              <button
+                onClick={launchInstantlyCampaign}
+                className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded flex items-center gap-1"
+              >
+                <Mail className="w-3 h-3" />
+                Send via Instantly
               </button>
               <button
                 onClick={() => setSelectedLeads(new Set())}
@@ -366,10 +411,10 @@ export default function ResultsClient({
                 body: JSON.stringify({ leadId: enrichingLead.id, answers }),
               });
               if (res.ok) {
-                window.location.reload();
+                router.refresh();
               }
             } catch (e) {
-              console.error("Enrich failed:", e);
+              // Enrichment failed
             }
           }}
         />

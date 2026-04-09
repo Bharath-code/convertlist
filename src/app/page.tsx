@@ -60,7 +60,7 @@ export default function LandingPage() {
             Analyze your waitlist free
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <span className="text-sm text-slate-500">50 leads free, no credit card</span>
+          <span className="text-sm text-slate-500">25 leads free, no credit card</span>
         </div>
 
         <div className="flex items-center justify-center gap-1 mb-8">
@@ -181,22 +181,22 @@ export default function LandingPage() {
               name="Free"
               price="$0"
               description="Get started with basic scoring"
-              features={["50 lead analyses", "CSV + paste import", "Hot/Warm/Cold segmentation", "AI outreach generation"]}
+              features={["25 lead analyses", "CSV + paste import", "Hot/Warm/Cold segmentation", "AI outreach generation"]}
               cta="Start free"
               href="/sign-up"
             />
             <PricingCard
               name="Pro"
-              price="$9/mo"
+              price="$29/mo"
               description="For founders ready to scale"
-              features={["2,000 leads/mo", "3-step email sequences", "Basic reply detection", "Priority processing"]}
+              features={["500 leads/mo", "3-step email sequences", "Basic reply detection", "Priority processing"]}
               cta="Get Pro"
               href="/sign-up"
               highlight={false}
             />
             <PricingCard
               name="Pro+"
-              price="$29/mo"
+              price="$79/mo"
               description="Unlimited everything"
               features={["Unlimited leads", "5-step email sequences", "Full reply detection", "Instantly integration"]}
               cta="Get Pro+"
@@ -204,11 +204,11 @@ export default function LandingPage() {
               highlight={true}
             />
             <PricingCard
-              name="Lifetime"
-              price="$49"
+              name="Launch"
+              price="$97"
               description="One payment, forever"
               features={["All Pro+ features", "Lifetime access", "No monthly fees", "Early feature access"]}
-              cta="Get Lifetime"
+              cta="Get Launch"
               href="/sign-up"
               highlight={false}
               note="one-time"
@@ -231,7 +231,7 @@ export default function LandingPage() {
             Analyze your waitlist free
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <p className="text-sm text-slate-500 mt-3">50 leads free, no credit card required</p>
+          <p className="text-sm text-slate-500 mt-3">25 leads free, no credit card required</p>
         </div>
       </section>
 

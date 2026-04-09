@@ -283,7 +283,7 @@
 
 ### 6.3: Configure Resend inbound email parsing
 **Task ID:** TBD
-**Status:** pending
+**Status:** completed
 **Blocked by:** 6
 **Deliverable:** Set up Resend inbound email route to parse forwarded replies.
 
@@ -362,13 +362,12 @@
 | 1 | 1-7, 41 | All completed |
 | 2 | 8-33 | All completed |
 | 3 | 26-37 | All completed |
-| 4 | 38-48 | All completed (6.3 pending) |
+| 4 | 38-48 | All completed |
 | 5 | 50, 46 | All completed |
 
 ## Remaining Work
 
 | Task | Description | Priority |
 |------|-------------|----------|
-| 6.3 | Resend inbound email route for reply parsing | Medium |
 | Bulk export | Export leads to CSV | Low |
 | Instantly integration | Phase 2 cold email + reply detection ($47/mo) | Phase 2 |

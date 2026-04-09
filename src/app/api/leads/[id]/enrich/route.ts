@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { enrichLead, isClearbitConfigured } from "@/lib/enrichment/clearbit";
 
 type EnrichmentAnswers = {
   urgency: "low" | "medium" | "high";
@@ -31,18 +32,45 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { newScore, newReason, newConfidence } = computeEnrichmentScore(lead.score ?? 0, answers);
+    // Try Clearbit enrichment first if configured
+    let clearbitData = null;
+    if (isClearbitConfigured()) {
+      clearbitData = await enrichLead(lead.email);
+    }
+
+    // Compute enrichment score from manual answers
+    const { newScore, newReason, newConfidence } = computeEnrichmentScore(
+      lead.score ?? 0,
+      answers,
+      clearbitData
+    );
+
+    // Update lead with enrichment data
+    const updateData: any = {
+      score: newScore,
+      confidence: newConfidence,
+      reason: newReason,
+    };
+
+    // Add Clearbit data if available
+    if (clearbitData?.company?.name && !lead.company) {
+      updateData.company = clearbitData.company.name;
+    }
+    if (clearbitData?.name?.fullName && !lead.name) {
+      updateData.name = clearbitData.name.fullName;
+    }
 
     const updated = await db.lead.update({
       where: { id: leadId },
-      data: {
-        score: newScore,
-        confidence: newConfidence,
-        reason: newReason,
-      },
+      data: updateData,
     });
 
-    return NextResponse.json({ score: updated.score, confidence: updated.confidence, reason: updated.reason });
+    return NextResponse.json({
+      score: updated.score,
+      confidence: updated.confidence,
+      reason: updated.reason,
+      clearbitEnriched: !!clearbitData,
+    });
   } catch (error) {
     console.error("Enrichment error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
@@ -51,7 +79,8 @@ export async function POST(req: Request) {
 
 function computeEnrichmentScore(
   baseScore: number,
-  answers: EnrichmentAnswers
+  answers: EnrichmentAnswers,
+  clearbitData?: any
 ): {
   newScore: number;
   newReason: string;
@@ -87,6 +116,37 @@ function computeEnrichmentScore(
   if (answers.role === "founder") {
     boost += 5;
     reasons.push("founder");
+  }
+
+  // Add Clearbit-based boosts if available
+  if (clearbitData) {
+    // Company size boost
+    if (clearbitData.company?.size && clearbitData.company.size >= 50) {
+      boost += 8;
+      reasons.push("mid-size company");
+    } else if (clearbitData.company?.size && clearbitData.company.size >= 10) {
+      boost += 5;
+      reasons.push("small company");
+    }
+
+    // Role seniority boost
+    if (clearbitData.employment?.seniority === "executive" || clearbitData.employment?.seniority === "director") {
+      boost += 7;
+      reasons.push("executive role");
+    } else if (clearbitData.employment?.seniority === "manager") {
+      boost += 4;
+      reasons.push("manager role");
+    }
+
+    // Industry relevance (tech companies are better fit)
+    if (clearbitData.company?.tags?.some((tag: string) => 
+      tag.toLowerCase().includes("technology") || 
+      tag.toLowerCase().includes("software") ||
+      tag.toLowerCase().includes("saas")
+    )) {
+      boost += 5;
+      reasons.push("tech company");
+    }
   }
 
   const newScore = Math.min(90, baseScore + boost);

@@ -47,7 +47,6 @@ export async function PATCH(
 
     return NextResponse.json({ sequence: updated });
   } catch (error) {
-    console.error("Update sequence error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
@@ -77,7 +76,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete sequence error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

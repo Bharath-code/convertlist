@@ -51,11 +51,11 @@ export async function POST(req: Request) {
     const prompt = `You are an expert cold email copywriter. Generate a personalized outreach email.
 
 Lead info:
-- Name: ${lead.name || "there"}
+- Name: ${lead.name ?? "there"}
 - Email: ${lead.email}
-- Company: ${lead.company || "N/A"}
-- Signup note: ${lead.signupNote || "N/A"}
-- Source: ${lead.source || "N/A"}
+- Company: ${lead.company ?? "N/A"}
+- Signup note: ${lead.signupNote ?? "N/A"}
+- Source: ${lead.source ?? "N/A"}
 
 Base template:
 Subject: ${step.subject}
@@ -85,7 +85,7 @@ Return ONLY valid JSON with this exact structure, nothing else:
         body = parsed.body || body;
       }
     } catch (e) {
-      console.error("AI generation failed, using template:", e);
+      // AI generation failed, using template fallback
     }
 
     return NextResponse.json({
@@ -95,7 +95,6 @@ Return ONLY valid JSON with this exact structure, nothing else:
       sequenceId: sequence.id,
     });
   } catch (error) {
-    console.error("Outreach generation error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

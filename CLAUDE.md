@@ -146,10 +146,10 @@ Shows: total leads, hot/warm/cold distribution, contacted count, reply count, pa
 
 ## Pricing Strategy
 
-- **Launch:** $49 lifetime (test at higher price — $19 too easy to buy and not use)
-- **Free tier:** 50 lead analysis
-- **Pro ($9/mo):** 2,000 leads, basic sequences (3-step), basic reply detection
-- **Pro+ ($29/mo):** unlimited leads, full sequences (5-step), full reply detection, Loops/Instantly integration
+- **Launch:** $97 lifetime (test at higher price — $49 too easy to buy and not use)
+- **Free tier:** 25 lead analysis (down from 50 to make them feel the pain)
+- **Pro ($29/mo):** 500 leads, basic sequences (3-step), basic reply detection
+- **Pro+ ($79/mo):** unlimited leads, full sequences (5-step), full reply detection, Instantly integration
 
 ## Key Decisions
 

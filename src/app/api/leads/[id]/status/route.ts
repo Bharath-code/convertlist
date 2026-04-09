@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { trackConversion } from "@/lib/scoring/conversion-analytics";
 
 export async function PATCH(
   req: Request,
@@ -51,9 +52,13 @@ export async function PATCH(
       }),
     ]);
 
+    // Track conversion if status changed to PAID
+    if (status === "PAID" && prevStatus !== "PAID") {
+      await trackConversion(id);
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Status update error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
