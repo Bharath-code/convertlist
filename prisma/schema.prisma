@@ -32,6 +32,18 @@ model Waitlist {
   updatedAt      DateTime @updatedAt
   leads          Lead[]
   sequences      Sequence[]
+
+  // Launch Timing AI fields (T1)
+  launchReadinessScore  Int?
+  recommendedLaunchDate DateTime?
+  engagementHeatmap     String?
+  seasonalityData       String?
+
+  // Dynamic Pricing Intelligence fields (P1)
+  recommendedPricePoint  String?
+  priceConfidence       Float?
+  willingnessToPayScore Float?
+  discountStrategy      String?
 }
 
 model Lead {
@@ -78,6 +90,12 @@ model Lead {
   featurePriority      String?
   objectionHandling    String?
   timelinePrediction   String?
+
+  // Virality Score fields (V1)
+  viralityScore        Int?
+  sharePropensity      Float?
+  networkReach         Int?
+  advocatePotential    Float?
 
   @@index([waitlistId])
   @@index([email])
