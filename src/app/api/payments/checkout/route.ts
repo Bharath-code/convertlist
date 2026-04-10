@@ -9,8 +9,8 @@ import { db } from "@/lib/db";
  *
  * Setup:
  * 1. Create products in Dodo dashboard:
- *    - price_pro_monthly ($29/mo)
- *    - price_pro_plus_monthly ($79/mo)
+ *    - price_starter_monthly ($29/mo)
+ *    - price_pro_monthly ($79/mo)
  *    - price_launch ($97 one-time)
  * 2. Set DODO_PUBLIC_KEY in environment
  * 3. Configure webhook endpoint: /api/webhooks/dodo
@@ -35,12 +35,12 @@ export async function GET(req: Request) {
     const plan = searchParams.get("plan");
 
     const plans: Record<string, { priceId: string; successUrl: string }> = {
-      pro: {
-        priceId: process.env.DODO_PRICE_ID_PRO || "price_pro_monthly",
+      starter: {
+        priceId: process.env.DODO_PRICE_ID_STARTER || "price_starter_monthly",
         successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard?upgrade=success`,
       },
-      pro_plus: {
-        priceId: process.env.DODO_PRICE_ID_PRO_PLUS || "price_pro_plus_monthly",
+      pro: {
+        priceId: process.env.DODO_PRICE_ID_PRO || "price_pro_monthly",
         successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard?upgrade=success`,
       },
       launch: {

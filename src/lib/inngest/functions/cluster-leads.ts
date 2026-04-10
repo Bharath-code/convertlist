@@ -49,6 +49,39 @@ export const clusterLeads = inngest.createFunction(
       clusteredCount += batch.length;
     }
 
+    // Trigger advanced analyses after clustering completes
+    await step.run("trigger-advanced-analyses", async () => {
+      await Promise.all([
+        inngest.send({ name: "leads/needs-pricing-analysis", data: { waitlistId } }),
+        inngest.send({ name: "leads/needs-launch-timing-analysis", data: { waitlistId } }),
+        inngest.send({ name: "leads/needs-virality-scoring", data: { waitlistId } }),
+        inngest.send({ name: "leads/needs-competitor-analysis", data: { waitlistId } }),
+        inngest.send({ name: "leads/needs-network-mapping", data: { waitlistId } }),
+      ]);
+    });
+
+    // Check if user has multiple waitlists and trigger multi-product analysis
+    await step.run("check-multi-product", async () => {
+      const waitlist = await db.waitlist.findUnique({
+        where: { id: waitlistId },
+        select: { userId: true },
+      });
+
+      if (!waitlist) return;
+
+      const waitlistCount = await db.waitlist.count({
+        where: { userId: waitlist.userId },
+      });
+
+      // Trigger multi-product analysis if user has 2+ waitlists
+      if (waitlistCount >= 2) {
+        await inngest.send({
+          name: "users/needs-multi-product-analysis",
+          data: { userId: waitlist.userId },
+        });
+      }
+    });
+
     return { clustered: clusteredCount };
   }
 );
@@ -83,16 +116,16 @@ async function clusterLeadBatchInternal(
     ];
     const avgConfidence = confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length;
 
-    // TODO: Update lead with clustering data after Prisma migration
-    // await db.lead.update({
-    //   where: { id: lead.id },
-    //   data: {
-    //     useCaseCluster: cluster?.useCaseCluster || null,
-    //     painPointTribe: painPoint?.painPointTribe || null,
-    //     lookalikeGroupId: lookalike?.lookalikeGroupId || null,
-    //     clusterConfidence: avgConfidence || null,
-    //   },
-    // });
+    // Update lead with clustering data
+    await db.lead.update({
+      where: { id: lead.id },
+      data: {
+        useCaseCluster: cluster?.useCaseCluster || null,
+        painPointTribe: painPoint?.painPointTribe || null,
+        lookalikeGroupId: lookalike?.lookalikeGroupId || null,
+        clusterConfidence: avgConfidence || null,
+      } as any,
+    });
 
     console.log(`Clustered lead ${lead.id}:`, {
       cluster: cluster?.useCaseCluster,

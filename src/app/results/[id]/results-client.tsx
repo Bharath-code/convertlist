@@ -23,10 +23,17 @@ import {
   X,
   ThumbsUp,
   ThumbsDown,
+  DollarSign,
+  Rocket,
+  Target,
 } from "lucide-react";
 import EnrichmentModal from "./enrichment-modal";
 import SequenceBuilder from "./sequences/sequence-builder";
 import type { EnrichmentAnswers } from "./enrichment-modal";
+import PricingIntelligenceDashboard from "@/components/pricing-intelligence-dashboard";
+import LaunchDayCommandCenter from "@/components/launch-day-command-center";
+import ViralityAnalyticsDashboard from "@/components/virality-analytics-dashboard";
+import CompetitorInsightsDashboard from "@/components/competitor-insights-dashboard";
 
 type Lead = {
   id: string;
@@ -49,6 +56,16 @@ type Lead = {
   // Clustering fields
   useCaseCluster?: string | null;
   painPointTribe?: string | null;
+  // Competitor Cross-Reference fields
+  detectedCompetitors?: string | null;
+  competitorFeatures?: string | null;
+  switchingCost?: string | null;
+  competitorConfidence?: number | null;
+  // Referral Network Mapper fields
+  relatedLeads?: string | null;
+  companyRelationships?: string | null;
+  communityOverlap?: string | null;
+  influenceScore?: number | null;
 };
 
 type Props = {
@@ -98,7 +115,7 @@ export default function ResultsClient({
   userPlan = "FREE",
 }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"HOT" | "WARM" | "COLD" | "TRIBES">("HOT");
+  const [activeTab, setActiveTab] = useState<"HOT" | "WARM" | "COLD" | "TRIBES" | "PRICING" | "LAUNCH" | "VIRALITY" | "COMPETITORS">("HOT");
   const [search, setSearch] = useState("");
   const [showTop10, setShowTop10] = useState(false);
   const [enrichingLead, setEnrichingLead] = useState<Lead | null>(null);
@@ -250,7 +267,7 @@ export default function ResultsClient({
   };
 
   const isFreeUser = userPlan === "FREE";
-  const nearLimit = isFreeUser && waitlist.totalLeads >= 40;
+  const nearLimit = isFreeUser && waitlist.totalLeads >= 20;
 
   return (
     <div>
@@ -258,10 +275,10 @@ export default function ResultsClient({
         <div className="card mb-6 border-2 border-amber-300 bg-amber-50 flex items-center justify-between">
           <div>
             <p className="font-medium text-amber-900">
-              You&apos;re at {waitlist.totalLeads}/50 leads on the free plan
+              You&apos;re at {waitlist.totalLeads}/25 leads on the free plan
             </p>
             <p className="text-sm text-amber-700">
-              Upgrade to Pro for 2,000 leads/mo or Pro+ for unlimited
+              Upgrade to Starter for 500 leads/mo or Pro for 5,000 leads/mo
             </p>
           </div>
           <Link href="/pricing" className="btn-primary text-sm flex items-center gap-1 flex-shrink-0">
@@ -375,7 +392,7 @@ export default function ResultsClient({
         </div>
 
         {!showTop10 && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {(["HOT", "WARM", "COLD"] as const).map((seg) => {
               const c = segmentConfig[seg];
               const count = seg === "HOT" ? hotLeads.length : seg === "WARM" ? warmLeads.length : coldLeads.length;
@@ -408,6 +425,54 @@ export default function ResultsClient({
               <Flame className="w-4 h-4" />
               Tribes
             </button>
+            <button
+              onClick={() => setActiveTab("PRICING")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                activeTab === "PRICING"
+                  ? "bg-green-50 border-green-200 text-slate-900"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+              aria-label="View pricing intelligence"
+            >
+              <DollarSign className="w-4 h-4" />
+              Pricing
+            </button>
+            <button
+              onClick={() => setActiveTab("LAUNCH")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                activeTab === "LAUNCH"
+                  ? "bg-blue-50 border-blue-200 text-slate-900"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+              aria-label="View launch timing"
+            >
+              <Rocket className="w-4 h-4" />
+              Launch
+            </button>
+            <button
+              onClick={() => setActiveTab("VIRALITY")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                activeTab === "VIRALITY"
+                  ? "bg-pink-50 border-pink-200 text-slate-900"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+              aria-label="View virality analytics"
+            >
+              <Flame className="w-4 h-4" />
+              Virality
+            </button>
+            <button
+              onClick={() => setActiveTab("COMPETITORS")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                activeTab === "COMPETITORS"
+                  ? "bg-orange-50 border-orange-200 text-slate-900"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+              aria-label="View competitor insights"
+            >
+              <Target className="w-4 h-4" />
+              Competitors
+            </button>
           </div>
         )}
       </div>
@@ -420,6 +485,14 @@ export default function ResultsClient({
             onCopyEmail={copyEmail}
             onGenerateDemoScript={(lead) => setDemoScriptLead(lead)}
           />
+        ) : activeTab === "PRICING" ? (
+          <PricingIntelligenceDashboard waitlistId={waitlist.id} />
+        ) : activeTab === "LAUNCH" ? (
+          <LaunchTimingView waitlistId={waitlist.id} />
+        ) : activeTab === "VIRALITY" ? (
+          <ViralityAnalyticsDashboard waitlistId={waitlist.id} />
+        ) : activeTab === "COMPETITORS" ? (
+          <CompetitorView waitlistId={waitlist.id} />
         ) : filteredLeads.length === 0 ? (
           <div className="card text-center py-12 text-slate-500">
             {search ? "No leads match your search" : "No leads found"}
@@ -438,7 +511,7 @@ export default function ResultsClient({
             </span>
           </div>
         )}
-        {activeTab !== "TRIBES" && filteredLeads.map((lead) => (
+        {activeTab !== "TRIBES" && activeTab !== "PRICING" && activeTab !== "LAUNCH" && activeTab !== "VIRALITY" && activeTab !== "COMPETITORS" && filteredLeads.map((lead) => (
           <div key={lead.id} className="flex items-start gap-3">
             <input
               type="checkbox"
@@ -633,6 +706,25 @@ function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead:
                 🔥 {lead.socialProofScore}
               </span>
             )}
+            
+            {/* Competitor badges */}
+            {lead.detectedCompetitors && (
+              <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700 flex items-center gap-1">
+                🎯 {JSON.parse(lead.detectedCompetitors).slice(0, 2).join(', ')}
+              </span>
+            )}
+            
+            {/* Network relationship badges */}
+            {lead.influenceScore && lead.influenceScore > 70 && (
+              <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 flex items-center gap-1">
+                ⭐ Influencer ({lead.influenceScore})
+              </span>
+            )}
+            {lead.relatedLeads && JSON.parse(lead.relatedLeads).length > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded bg-cyan-100 text-cyan-700 flex items-center gap-1">
+                🔗 {JSON.parse(lead.relatedLeads).length} connections
+              </span>
+            )}
           </div>
 
           {expanded && (
@@ -789,6 +881,75 @@ function DemoScriptModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function LaunchTimingView({ waitlistId }: { waitlistId: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch(`/api/waitlist/${waitlistId}/launch-timing`);
+        if (response.ok) {
+          const result = await response.json();
+          setData(result);
+        }
+      } catch (error) {
+        console.error("Failed to fetch launch timing data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [waitlistId]);
+
+  if (loading) return <div className="card p-6">Loading launch timing data...</div>;
+  if (!data) return <div className="card p-6">No launch timing data available</div>;
+
+  return (
+    <LaunchDayCommandCenter
+      readinessScore={data.launchReadinessScore}
+      recommendedLaunchDate={data.recommendedLaunchDate ? new Date(data.recommendedLaunchDate) : undefined}
+      peakEngagementDay={data.engagementHeatmap?.peakDay}
+      peakEngagementHour={data.engagementHeatmap?.peakHour}
+      season={data.seasonalityData?.season}
+      recommendations={data.seasonalityData?.recommendations}
+    />
+  );
+}
+
+function CompetitorView({ waitlistId }: { waitlistId: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch(`/api/waitlist/${waitlistId}/competitors`);
+        if (response.ok) {
+          const result = await response.json();
+          setData(result);
+        }
+      } catch (error) {
+        console.error("Failed to fetch competitor data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [waitlistId]);
+
+  if (loading) return <div className="card p-6">Loading competitor data...</div>;
+  if (!data) return <div className="card p-6">No competitor data available</div>;
+
+  return (
+    <CompetitorInsightsDashboard
+      competitorStats={data.competitorStats}
+      featureGaps={data.featureGaps}
+      switchingCostStats={data.switchingCostStats}
+    />
   );
 }
 

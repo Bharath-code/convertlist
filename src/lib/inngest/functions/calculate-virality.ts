@@ -113,20 +113,15 @@ async function processViralityBatch(
       );
 
       // Update lead with virality data
-      // Note: This requires Prisma migration to add virality fields to Lead model
-      try {
-        await db.lead.update({
-          where: { id: lead.id },
-          data: {
-            viralityScore: advocateResult.advocatePotential,
-            sharePropensity: advocateResult.sharePropensity,
-            networkReach: advocateResult.networkReach,
-            advocatePotential: advocateResult.advocatePotential,
-          } as any,
-        });
-      } catch (error) {
-        console.error(`Failed to update lead ${lead.id} with virality data (migration needed):`, error);
-      }
+      await db.lead.update({
+        where: { id: lead.id },
+        data: {
+          viralityScore: advocateResult.advocatePotential,
+          sharePropensity: advocateResult.sharePropensity,
+          networkReach: advocateResult.networkReach,
+          advocatePotential: advocateResult.advocatePotential,
+        } as any,
+      });
 
       console.log(`Virality score calculated for lead ${lead.id}:`, {
         viralityScore: advocateResult.advocatePotential,

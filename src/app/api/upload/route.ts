@@ -4,10 +4,10 @@ import { db } from "@/lib/db";
 import { inngest } from "@/lib/inngest/client";
 
 const PLAN_LEAD_LIMITS: Record<string, number> = {
-  FREE: 50,
-  PRO: 2000,
-  PRO_PLUS: Infinity,
-  LIFETIME: Infinity,
+  FREE: 25,
+  STARTER: 500,
+  PRO: 5000,
+  LAUNCH: 5000,
 };
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const limit = PLAN_LEAD_LIMITS[user.plan] ?? 50;
+    const limit = PLAN_LEAD_LIMITS[user.plan] ?? 25;
     const currentUsed = await db.lead.count({ where: { waitlist: { userId } } });
 
     if (mode === "csv") {

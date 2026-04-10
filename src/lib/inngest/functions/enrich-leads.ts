@@ -87,22 +87,22 @@ async function enrichLeadBatch(leads: Array<{ id: string; email: string; company
       ];
       const avgConfidence = confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length;
 
-      // TODO: Update lead with enrichment data after Prisma migration
-      // await db.lead.update({
-      //   where: { id: lead.id },
-      //   data: {
-      //     linkedinUrl: linkedin?.linkedinUrl || null,
-      //     companySize: linkedin?.companySize || null,
-      //     techStack: techStack ? formatTechStack(techStack) : null,
-      //     fundingStatus: funding?.fundingStatus || null,
-      //     twitterFollowers: socialProof?.twitterFollowers || null,
-      //     githubActivity: socialProof?.githubActivity || null,
-      //     socialProofScore: socialProof?.socialProofScore || null,
-      //     enrichedAt: new Date(),
-      //     enrichmentConfidence: avgConfidence || null,
-      //   },
-      // });
-      
+      // Update lead with enrichment data
+      await db.lead.update({
+        where: { id: lead.id },
+        data: {
+          linkedinUrl: linkedin?.linkedinUrl || null,
+          companySize: linkedin?.companySize || null,
+          techStack: techStack ? formatTechStack(techStack) : null,
+          fundingStatus: funding?.fundingStatus || null,
+          twitterFollowers: socialProof?.twitterFollowers || null,
+          githubActivity: socialProof?.githubActivity || null,
+          socialProofScore: socialProof?.socialProofScore || null,
+          enrichedAt: new Date(),
+          enrichmentConfidence: avgConfidence || null,
+        } as any,
+      });
+
       console.log(`Enriched lead ${lead.id}:`, {
         linkedin: linkedin?.linkedinUrl,
         techStack: techStack?.detectedStack,

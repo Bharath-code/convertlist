@@ -79,21 +79,16 @@ export const analyzeLaunchTiming = inngest.createFunction(
     }
 
     // Update waitlist with launch timing data
-    // Note: This requires Prisma migration to add new fields to Waitlist model
     await step.run("update-waitlist", async () => {
-      try {
-        await db.waitlist.update({
-          where: { id: waitlistId },
-          data: {
-            launchReadinessScore: readinessScore.readinessScore,
-            recommendedLaunchDate,
-            engagementHeatmap: heatmap ? JSON.stringify(heatmap) : null,
-            seasonalityData: seasonality ? JSON.stringify(seasonality) : null,
-          } as any,
-        });
-      } catch (error) {
-        console.error("Failed to update waitlist with launch timing data (migration needed):", error);
-      }
+      await db.waitlist.update({
+        where: { id: waitlistId },
+        data: {
+          launchReadinessScore: readinessScore.readinessScore,
+          recommendedLaunchDate,
+          engagementHeatmap: heatmap ? JSON.stringify(heatmap) : null,
+          seasonalityData: seasonality ? JSON.stringify(seasonality) : null,
+        } as any,
+      });
     });
 
     return {

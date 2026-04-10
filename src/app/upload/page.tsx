@@ -400,7 +400,7 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
           {isUploading ? (
             "Processing..."
           ) : wouldExceed ? (
-            "Would exceed 50 lead limit"
+            "Would exceed 25 lead limit"
           ) : (
             <>
               Start Analysis

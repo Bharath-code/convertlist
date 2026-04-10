@@ -60,23 +60,18 @@ export const analyzePricing = inngest.createFunction(
     const revenueProjection = getRevenueProjection(tierRecommendation.tiers, leadsForAnalysis);
 
     // Update waitlist with pricing data
-    // Note: This requires Prisma migration to add new fields to Waitlist model
     await step.run("update-waitlist", async () => {
-      try {
-        await db.waitlist.update({
-          where: { id: waitlistId },
-          data: {
-            recommendedPricePoint: aggregateWtp.recommendedPricePoint,
-            priceConfidence: aggregateWtp.averageScore,
-            willingnessToPayScore: aggregateWtp.averageScore,
-            discountStrategy: discountStrategy.recommendedDiscount > 0 
-              ? `${discountStrategy.recommendedDiscount}% for ${discountStrategy.targetLeads.length} leads`
-              : null,
-          } as any,
-        });
-      } catch (error) {
-        console.error("Failed to update waitlist with pricing data (migration needed):", error);
-      }
+      await db.waitlist.update({
+        where: { id: waitlistId },
+        data: {
+          recommendedPricePoint: aggregateWtp.recommendedPricePoint,
+          priceConfidence: aggregateWtp.averageScore,
+          willingnessToPayScore: aggregateWtp.averageScore,
+          discountStrategy: discountStrategy.recommendedDiscount > 0 
+            ? `${discountStrategy.recommendedDiscount}% for ${discountStrategy.targetLeads.length} leads`
+            : null,
+        } as any,
+      });
     });
 
     return {

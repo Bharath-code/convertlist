@@ -39,13 +39,13 @@ export async function POST(
       null // useCaseCluster - add after Prisma migration
     );
 
-    // TODO: Update lead with demo script data after Prisma migration
-    // await db.lead.update({
-    //   where: { id: leadId },
-    //   data: {
-    //     demoScript: result.demoScript,
-    //   },
-    // });
+    // Update lead with demo script data
+    await db.lead.update({
+      where: { id: leadId },
+      data: {
+        demoScript: result.demoScript,
+      } as any,
+    });
 
     return NextResponse.json({
       demoScript: result.demoScript,

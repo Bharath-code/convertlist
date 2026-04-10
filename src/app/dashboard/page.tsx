@@ -105,11 +105,13 @@ export default async function DashboardPage() {
             {waitlists.length} waitlist{waitlists.length !== 1 ? "es" : ""} &middot;{" "}
             {user.plan === "FREE"
               ? "Free tier"
+              : user.plan === "STARTER"
+              ? "Starter plan"
               : user.plan === "PRO"
               ? "Pro plan"
-              : user.plan === "PRO_PLUS"
-              ? "Pro+ plan"
-              : "Lifetime"}
+              : user.plan === "LAUNCH"
+              ? "Lifetime"
+              : "Free tier"}
           </p>
         </div>
         <Link href="/upload" className="btn-primary flex items-center gap-2">

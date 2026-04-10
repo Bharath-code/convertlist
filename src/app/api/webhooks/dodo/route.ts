@@ -20,13 +20,13 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing email" }, { status: 400 });
       }
 
-      let plan: "FREE" | "PRO" | "PRO_PLUS" | "LAUNCH" = "FREE";
+      let plan: "FREE" | "STARTER" | "PRO" | "LAUNCH" = "FREE";
       if (plan_id === "price_launch" || lifetime) {
         plan = "LAUNCH";
-      } else if (plan_id === "price_pro_plus" || plan_id === "price_pro_plus_monthly") {
-        plan = "PRO_PLUS";
       } else if (plan_id === "price_pro" || plan_id === "price_pro_monthly") {
         plan = "PRO";
+      } else if (plan_id === "price_starter" || plan_id === "price_starter_monthly") {
+        plan = "STARTER";
       }
 
       const planExpiry =

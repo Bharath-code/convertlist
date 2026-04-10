@@ -18,6 +18,12 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   waitlists Waitlist[]
+  
+  // Multi-Product Intelligence fields (M1)
+  productHistory        String?
+  crossProductBehavior  String?
+  superUserScore        Float?
+  lifetimeValuePrediction Float?
 }
 
 model Waitlist {
@@ -31,13 +37,13 @@ model Waitlist {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   leads          Lead[]
+  
+  // Launch Day Command Center fields (L1)
+  launchReadinessScore   Float?
+  recommendedLaunchDate   DateTime?
+  engagementHeatmap      String?
+  seasonalityData         String?
   sequences      Sequence[]
-
-  // Launch Timing AI fields (T1)
-  launchReadinessScore  Int?
-  recommendedLaunchDate DateTime?
-  engagementHeatmap     String?
-  seasonalityData       String?
 
   // Dynamic Pricing Intelligence fields (P1)
   recommendedPricePoint  String?
@@ -96,6 +102,18 @@ model Lead {
   sharePropensity      Float?
   networkReach         Int?
   advocatePotential    Float?
+
+  // Competitor Cross-Reference fields (X1)
+  detectedCompetitors String?
+  competitorFeatures   String?
+  switchingCost        String?
+  competitorConfidence Float?
+
+  // Referral Network Mapper fields (N1)
+  relatedLeads         String?
+  companyRelationships String?
+  communityOverlap     String?
+  influenceScore       Float?
 
   @@index([waitlistId])
   @@index([email])
@@ -157,8 +175,8 @@ model ConversionAnalytics {
 
 enum Plan {
   FREE
+  STARTER
   PRO
-  PRO_PLUS
   LAUNCH
 }
 
