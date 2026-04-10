@@ -44,31 +44,40 @@ export async function generateDemoScript(
 
 Lead Information:
 - Name: ${name || "there"}
-- Email: ${email}
 - Company: ${company || "N/A"}
 - Signup note: "${signupNote || "N/A"}"
-- Lead score: ${score || "N/A"}
-- Segment: ${segment || "N/A"}
-- Use case cluster: ${useCaseCluster || "N/A"}
+- Feature priority: ${featureMapping?.featurePriority || "Dashboard & Analytics"}
+- Objection handling: ${objectionHandling?.objectionHandling || "Focus on ROI"}
+- Timeline: ${timelinePrediction?.timelinePrediction || "1 week"}
 
-Analysis Results:
-- Feature priority: ${featureMapping?.featurePriority || "N/A"}
-- Objection handling: ${objectionHandling?.objectionHandling || "N/A"}
-- Timeline prediction: ${timelinePrediction?.timelinePrediction || "N/A"}
+EXAMPLE OF GOOD SCRIPT:
+Opening: "Hi Alex! Thanks for joining. I'm excited to show you how our dashboard can help MarketingPro track campaign performance."
 
-Generate a demo script with these sections:
-1. Opening (warm, personalized greeting)
-2. Discovery (2-3 questions to understand their needs)
-3. Demo Flow (prioritize features in order: ${featureMapping?.featurePriority || "general overview"})
-4. Objection Handling (${objectionHandling?.objectionHandling || "focus on value and ROI"})
-5. Closing (next steps based on timeline: ${timelinePrediction?.timelinePrediction || "follow up in 1 week"})
+Discovery: "Before we dive in, what's your biggest challenge with tracking marketing metrics right now?"
 
-Rules:
-- Keep it conversational and natural
-- Make it specific to their use case
-- Include specific talking points for each feature
-- Keep under 400 words
-- Return ONLY the demo script text, no JSON`;
+Demo Flow: "Let me show you three key features:
+1. Dashboard - See all your campaigns at a glance
+2. Analytics - Deep dive into performance data
+3. Reports - Export monthly reports for stakeholders"
+
+Objection Handling: "I understand budget is a concern. Our customers typically see 3x ROI within 3 months through improved campaign optimization."
+
+Closing: "Based on your needs, I'd recommend starting with our Starter plan. Would you like me to send over a trial link?"
+
+EXAMPLE OF BAD SCRIPT:
+❌ "Hey there! Welcome to our product. It's great and has many features. You should buy it."
+❌ Too generic, not personalized, no specific talking points
+
+REQUIREMENTS:
+- Personalize the opening with their name/company
+- Include 1-2 discovery questions relevant to their stated needs
+- Show exactly 2-3 features in priority order
+- Address 1 likely objection based on their segment
+- Specific next step with timeline
+- Keep between 200-500 words
+- Use professional but conversational tone
+
+Return ONLY the demo script text (no JSON).`;
 
     const result = await model.generateContent(prompt);
     const script = result.response.text().trim();
@@ -78,8 +87,10 @@ Rules:
       featureMapping?.confidence || 0,
       objectionHandling?.confidence || 0,
       timelinePrediction?.confidence || 0,
-    ];
-    const avgConfidence = confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length;
+    ].filter(c => c > 0); // Filter out zeros
+    const avgConfidence = confidenceScores.length > 0
+      ? confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length
+      : 0.5;
 
     return {
       demoScript: script,

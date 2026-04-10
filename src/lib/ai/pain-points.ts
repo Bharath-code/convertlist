@@ -43,30 +43,58 @@ export async function detectPainPointTribe(
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-    const prompt = `You are a customer research expert. Analyze this signup note and identify the PRIMARY pain point:
+    const prompt = `You are a customer research expert. Analyze this signup note and identify the PRIMARY pain point.
 
-${COMMON_PAIN_POINTS.join(", ")}
+Available pain points: ${COMMON_PAIN_POINTS.join(", ")}
 
-Signup note: "${signupNote}"
+EXAMPLES:
+Input: "We spend too much time on manual data entry"
+Output: {"painPointTribe": "Struggling with manual work", "confidence": 0.9}
 
-Rules:
-- Choose the pain point that BEST matches their frustration or need
-- If unsure, choose "Other"
-- Return ONLY JSON: {"painPointTribe": "...", "confidence": 0.0-1.0}
-- Confidence should be higher when the match is clear`;
+Input: "Need to automate our email campaigns"
+Output: {"painPointTribe": "Need automation", "confidence": 0.9}
+
+Input: "Can't see what's working in our marketing"
+Output: {"painPointTribe": "Need better analytics", "confidence": 0.85}
+
+Input: "Our current solution is too expensive"
+Output: {"painPointTribe": "Cost reduction", "confidence": 0.9}
+
+Input: "Trying to scale but hitting limits"
+Output: {"painPointTribe": "Scaling issues", "confidence": 0.85}
+
+Input: "Just checking this out"
+Output: {"painPointTribe": "Other", "confidence": 0.3}
+
+CONFIDENCE CRITERIA:
+- 0.9-1.0: Explicit pain point keywords (e.g., "manual", "automate", "expensive", "scale")
+- 0.7-0.8: Clear frustration or problem statement
+- 0.5-0.6: Indirect indication of pain
+- 0.3-0.4: Vague or exploratory
+- 0.0-0.2: Insufficient information
+
+Current signup note: "${signupNote}"
+
+Return ONLY valid JSON matching this schema:
+{"painPointTribe": string, "confidence": number}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
     
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
-      const parsed = JSON.parse(match[0]);
-      
-      if (COMMON_PAIN_POINTS.includes(parsed.painPointTribe)) {
-        return {
-          painPointTribe: parsed.painPointTribe,
-          confidence: Math.min(Math.max(parsed.confidence || 0.5, 0), 1),
-        };
+      try {
+        const parsed = JSON.parse(match[0]);
+        
+        if (COMMON_PAIN_POINTS.includes(parsed.painPointTribe)) {
+          const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.5;
+          return {
+            painPointTribe: parsed.painPointTribe,
+            confidence: Math.min(Math.max(confidence, 0), 1),
+          };
+        }
+      } catch (e) {
+        console.error('Failed to parse JSON:', e);
       }
     }
 
@@ -99,6 +127,9 @@ export async function detectPainPointsBatch(
  * Fallback pain point detection using simple heuristics
  */
 function fallbackPainPoint(signupNote: string): PainPointResult {
+  if (!signupNote) {
+    return { painPointTribe: "Other", confidence: 0.3 };
+  }
   const text = signupNote.toLowerCase();
   
   const painPointMap: Record<string, string> = {

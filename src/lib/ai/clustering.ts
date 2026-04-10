@@ -47,35 +47,62 @@ export async function clusterLead(
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-    const prompt = `You are a lead segmentation expert. Analyze this lead and assign them to ONE of these use case clusters:
+    const prompt = `You are a lead segmentation expert. Classify leads into use case clusters.
 
-${COMMON_CLUSTERS.join(", ")}
+Available clusters: ${COMMON_CLUSTERS.join(", ")}
 
-Lead data:
+EXAMPLES:
+Input: "I need to manage my online store orders"
+Output: {"useCaseCluster": "E-commerce", "confidence": 0.9}
+
+Input: "Looking for CRM for my agency clients"
+Output: {"useCaseCluster": "Agency", "confidence": 0.85}
+
+Input: "I'm a freelance designer"
+Output: {"useCaseCluster": "Freelancer", "confidence": 0.9}
+
+Input: "Building a SaaS platform for startups"
+Output: {"useCaseCluster": "B2B SaaS", "confidence": 0.85}
+
+Input: "Just exploring options"
+Output: {"useCaseCluster": "Other", "confidence": 0.3}
+
+CONFIDENCE CRITERIA:
+- 0.9-1.0: Clear, specific keywords match (e.g., "online store", "agency", "freelance", "SaaS")
+- 0.7-0.8: Strong contextual clues but not explicit
+- 0.5-0.6: Some indication but could be multiple clusters
+- 0.3-0.4: Vague or no clear indicators
+- 0.0-0.2: Insufficient information
+
+Current lead:
 - Email: ${email}
 - Name: ${name || "N/A"}
 - Company: ${company || "N/A"}
 - Signup note: ${signupNote || "N/A"}
 
-Rules:
-- Choose the cluster that BEST matches their use case
-- If unsure, choose "Other"
-- Return ONLY JSON: {"useCaseCluster": "...", "confidence": 0.0-1.0}
-- Confidence should be higher when the match is clear`;
+Return ONLY valid JSON matching this schema:
+{"useCaseCluster": string, "confidence": number}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
     
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
-      const parsed = JSON.parse(match[0]);
-      
-      // Validate the cluster is in our list
-      if (COMMON_CLUSTERS.includes(parsed.useCaseCluster)) {
-        return {
-          useCaseCluster: parsed.useCaseCluster,
-          confidence: Math.min(Math.max(parsed.confidence || 0.5, 0), 1),
-        };
+      try {
+        const parsed = JSON.parse(match[0]);
+        
+        // Validate the cluster is in our list
+        if (COMMON_CLUSTERS.includes(parsed.useCaseCluster)) {
+          // Validate confidence is a number
+          const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.5;
+          return {
+            useCaseCluster: parsed.useCaseCluster,
+            confidence: Math.min(Math.max(confidence, 0), 1),
+          };
+        }
+      } catch (e) {
+        // JSON parse error, fall back to heuristic
+        console.error('Failed to parse JSON:', e);
       }
     }
 

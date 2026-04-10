@@ -42,31 +42,62 @@ export async function mapFeatures(
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-    const prompt = `You are a product expert. Analyze this lead's signup note and identify which features they would be MOST interested in:
+    const prompt = `You are a product expert. Map lead needs to product features.
 
-${COMMON_FEATURES.join(", ")}
+Available features: ${COMMON_FEATURES.join(", ")}
 
-Lead data:
+EXAMPLES:
+Input: "Need to track sales data and generate reports"
+Output: {"featurePriority": "Dashboard & Analytics, Reporting", "confidence": 0.9}
+
+Input: "Manage my team and collaborate on projects"
+Output: {"featurePriority": "User Management, Collaboration", "confidence": 0.85}
+
+Input: "Connect with our existing tools and automate workflows"
+Output: {"featurePriority": "Integrations, Automation", "confidence": 0.9}
+
+Input: "Need secure API access for our developers"
+Output: {"featurePriority": "API Access, Security", "confidence": 0.9}
+
+Input: "Just looking around"
+Output: {"featurePriority": "Dashboard & Analytics", "confidence": 0.3}
+
+CONFIDENCE CRITERIA:
+- 0.9-1.0: Explicit feature requests with specific keywords (e.g., "track data", "team", "API")
+- 0.7-0.8: Clear problem statements that map to features
+- 0.5-0.6: General business needs that could apply to multiple features
+- 0.3-0.4: Vague or exploratory
+- 0.0-0.2: No clear feature needs
+
+RULES:
+- Select 1-3 features (only what's explicitly needed)
+- Order by relevance (most important first)
+- If no specific needs mentioned, default to "Dashboard & Analytics"
+
+Current lead:
 - Signup note: "${signupNote}"
 - Company: ${company || "N/A"}
 - Lead score: ${score || "N/A"}
 
-Rules:
-- Choose 2-3 features that best match their stated needs
-- Prioritize features that solve their specific problems
-- Return ONLY JSON: {"featurePriority": "Feature 1, Feature 2, Feature 3", "confidence": 0.0-1.0}
-- Confidence should be higher when the match is clear`;
+Return ONLY valid JSON matching this schema:
+{"featurePriority": string, "confidence": number}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
     
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
-      const parsed = JSON.parse(match[0]);
-      return {
-        featurePriority: parsed.featurePriority,
-        confidence: Math.min(Math.max(parsed.confidence || 0.5, 0), 1),
-      };
+      try {
+        const parsed = JSON.parse(match[0]);
+        // Validate confidence is a number
+        const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.5;
+        return {
+          featurePriority: parsed.featurePriority,
+          confidence: Math.min(Math.max(confidence, 0), 1),
+        };
+      } catch (e) {
+        console.error('Failed to parse JSON:', e);
+      }
     }
 
     return fallbackFeatureMapping(signupNote);
@@ -80,6 +111,9 @@ Rules:
  * Fallback feature mapping using simple heuristics
  */
 function fallbackFeatureMapping(signupNote: string): FeatureMappingResult {
+  if (!signupNote) {
+    return { featurePriority: "Dashboard & Analytics", confidence: 0.3 };
+  }
   const text = signupNote.toLowerCase();
   
   const featureMap: Record<string, string> = {
