@@ -56,6 +56,29 @@ model Lead {
   statusHistory LeadStatusHistory[]
   updatedAt   DateTime  @updatedAt
 
+  // Enrichment fields
+  linkedinUrl           String?
+  companySize          String?
+  techStack            String?
+  fundingStatus        String?
+  twitterFollowers     Int?
+  githubActivity      Int?
+  socialProofScore     Int?
+  enrichedAt           DateTime?
+  enrichmentConfidence Float?
+
+  // Clustering fields
+  useCaseCluster       String?
+  painPointTribe       String?
+  lookalikeGroupId     String?
+  clusterConfidence    Float?
+
+  // Demo script fields
+  demoScript           String?
+  featurePriority      String?
+  objectionHandling    String?
+  timelinePrediction   String?
+
   @@index([waitlistId])
   @@index([email])
 }

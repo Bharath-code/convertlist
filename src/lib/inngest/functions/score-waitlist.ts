@@ -72,6 +72,14 @@ export const scoreWaitlist = inngest.createFunction(
       });
     });
 
+    // Trigger enrichment after scoring completes
+    await step.run("trigger-enrichment", async () => {
+      await inngest.send({
+        name: "leads/needs-enrichment",
+        data: { waitlistId },
+      });
+    });
+
     return { processed };
   }
 );

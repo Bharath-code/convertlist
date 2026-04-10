@@ -8,6 +8,7 @@ interface StatusData {
   status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   totalLeads: number;
   processedLeads: number;
+  enrichedLeads?: number;
 }
 
 export default function ProcessingPage({
@@ -89,6 +90,80 @@ export default function ProcessingPage({
         <p className="text-slate-600">
           Our AI is scoring each lead based on intent, domain quality, and recency
         </p>
+      </div>
+
+      <div className="card">
+        {status.status === "FAILED" || error ? (
+          <div className="text-center py-8">
+            <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 font-medium mb-4">{error || "Processing failed"}</p>
+            <button
+              onClick={() => router.push("/upload")}
+              className="btn-secondary"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
+              <span className="font-medium text-slate-900">
+                {status.status === "PROCESSING"
+                  ? `Processing leads...`
+                  : status.status === "PENDING"
+                  ? "Starting..."
+                  : "Finalizing..."}
+              </span>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex justify-between text-sm text-slate-600 mb-1">
+                <span>
+                  Scoring: {status.processedLeads} / {status.totalLeads} leads
+                </span>
+                <span>{progress}%</span>
+              </div>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-slate-900 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            {status.enrichedLeads !== undefined && (
+              <div className="mb-4">
+                <div className="flex justify-between text-sm text-slate-600 mb-1">
+                  <span>
+                    Enriching: {status.enrichedLeads} / {status.totalLeads} leads
+                  </span>
+                  <span>
+                    {status.totalLeads > 0
+                      ? Math.round((status.enrichedLeads / status.totalLeads) * 100)
+                      : 0}%
+                  </span>
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${
+                        status.totalLeads > 0
+                          ? Math.round((status.enrichedLeads / status.totalLeads) * 100)
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-slate-500">
+              This page updates automatically. You can safely close this tab and return later.
+            </p>
+          </>
+        )}
       </div>
 
       <div className="card">

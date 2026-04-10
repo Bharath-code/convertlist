@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -19,6 +19,10 @@ import {
   Copy,
   Check,
   Mail,
+  FileText,
+  X,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import EnrichmentModal from "./enrichment-modal";
 import SequenceBuilder from "./sequences/sequence-builder";
@@ -36,6 +40,15 @@ type Lead = {
   reason: string;
   segment: "HOT" | "WARM" | "COLD";
   status: "UNCONTACTED" | "CONTACTED" | "REPLIED" | "INTERESTED" | "PAID";
+  // Enrichment fields (will be available after Prisma migration)
+  linkedinUrl?: string | null;
+  companySize?: string | null;
+  techStack?: string | null;
+  fundingStatus?: string | null;
+  socialProofScore?: number | null;
+  // Clustering fields
+  useCaseCluster?: string | null;
+  painPointTribe?: string | null;
 };
 
 type Props = {
@@ -85,12 +98,15 @@ export default function ResultsClient({
   userPlan = "FREE",
 }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"HOT" | "WARM" | "COLD">("HOT");
+  const [activeTab, setActiveTab] = useState<"HOT" | "WARM" | "COLD" | "TRIBES">("HOT");
   const [search, setSearch] = useState("");
   const [showTop10, setShowTop10] = useState(false);
   const [enrichingLead, setEnrichingLead] = useState<Lead | null>(null);
   const [showSequenceBuilder, setShowSequenceBuilder] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  const [demoScriptLead, setDemoScriptLead] = useState<Lead | null>(null);
+  const [demoScript, setDemoScript] = useState<string | null>(null);
+  const [loadingDemoScript, setLoadingDemoScript] = useState(false);
 
   const filteredLeads = useMemo(() => {
     const source = showTop10 ? hotLeads.slice(0, top10Percent) : getCurrentLeads();
@@ -103,6 +119,28 @@ export default function ResultsClient({
         l.company?.toLowerCase().includes(q)
     );
   }, [showTop10, hotLeads, top10Percent, search, activeTab, warmLeads, coldLeads]);
+
+  // Generate demo script when lead is selected
+  useEffect(() => {
+    if (demoScriptLead) {
+      setLoadingDemoScript(true);
+      setDemoScript(null);
+      fetch(`/api/leads/${demoScriptLead.id}/demo-script`, {
+        method: "POST",
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setDemoScript(data.demoScript);
+        })
+        .catch((error) => {
+          console.error("Failed to generate demo script:", error);
+          toast.error("Failed to generate demo script");
+        })
+        .finally(() => {
+          setLoadingDemoScript(false);
+        });
+    }
+  }, [demoScriptLead]);
 
   const exportToCSV = () => {
     const allLeads = [...hotLeads, ...warmLeads, ...coldLeads];
@@ -358,12 +396,31 @@ export default function ResultsClient({
                 </button>
               );
             })}
+            <button
+              onClick={() => setActiveTab("TRIBES")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                activeTab === "TRIBES"
+                  ? "bg-purple-50 border-purple-200 text-slate-900"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+              aria-label="View tribes"
+            >
+              <Flame className="w-4 h-4" />
+              Tribes
+            </button>
           </div>
         )}
       </div>
 
       <div className="space-y-3">
-        {filteredLeads.length === 0 ? (
+        {activeTab === "TRIBES" ? (
+          <TribesView
+            allLeads={[...hotLeads, ...warmLeads, ...coldLeads]}
+            onEnrich={(lead) => setEnrichingLead(lead)}
+            onCopyEmail={copyEmail}
+            onGenerateDemoScript={(lead) => setDemoScriptLead(lead)}
+          />
+        ) : filteredLeads.length === 0 ? (
           <div className="card text-center py-12 text-slate-500">
             {search ? "No leads match your search" : "No leads found"}
           </div>
@@ -381,7 +438,7 @@ export default function ResultsClient({
             </span>
           </div>
         )}
-        {filteredLeads.map((lead) => (
+        {activeTab !== "TRIBES" && filteredLeads.map((lead) => (
           <div key={lead.id} className="flex items-start gap-3">
             <input
               type="checkbox"
@@ -394,6 +451,7 @@ export default function ResultsClient({
               lead={lead}
               onEnrich={() => setEnrichingLead(lead)}
               onCopyEmail={() => copyEmail(lead.email)}
+              onGenerateDemoScript={() => setDemoScriptLead(lead)}
             />
           </div>
         ))}
@@ -434,11 +492,35 @@ export default function ResultsClient({
           }}
         />
       )}
+
+      {demoScriptLead && (
+        <DemoScriptModal
+          lead={demoScriptLead}
+          script={demoScript}
+          loading={loadingDemoScript}
+          onClose={() => {
+            setDemoScriptLead(null);
+            setDemoScript(null);
+          }}
+          onCopy={() => {
+            if (demoScript) {
+              navigator.clipboard.writeText(demoScript);
+              toast.success("Demo script copied to clipboard");
+            }
+          }}
+          onFeedback={(positive: boolean) => {
+            // TODO: Track feedback in analytics
+            toast.success(positive ? "Thanks for the feedback!" : "We'll improve next time");
+            setDemoScriptLead(null);
+            setDemoScript(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function LeadCard({ lead, onEnrich, onCopyEmail }: { lead: Lead; onEnrich: () => void; onCopyEmail: () => void }) {
+function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead: Lead; onEnrich: () => void; onCopyEmail: () => void; onGenerateDemoScript: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState(lead.status);
@@ -529,6 +611,28 @@ function LeadCard({ lead, onEnrich, onCopyEmail }: { lead: Lead; onEnrich: () =>
               {lead.confidence}
             </span>
             <span className="text-xs text-slate-500">{lead.reason}</span>
+            
+            {/* Enrichment badges */}
+            {lead.companySize && (
+              <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                {lead.companySize}
+              </span>
+            )}
+            {lead.techStack && (
+              <span className="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">
+                {lead.techStack.split(',').slice(0, 2).join(', ')}
+              </span>
+            )}
+            {lead.fundingStatus && (
+              <span className="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                {lead.fundingStatus}
+              </span>
+            )}
+            {lead.socialProofScore && lead.socialProofScore > 50 && (
+              <span className="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700 flex items-center gap-1">
+                🔥 {lead.socialProofScore}
+              </span>
+            )}
           </div>
 
           {expanded && (
@@ -541,11 +645,32 @@ function LeadCard({ lead, onEnrich, onCopyEmail }: { lead: Lead; onEnrich: () =>
               {lead.source && (
                 <p className="text-xs text-slate-500">Source: {lead.source}</p>
               )}
+              {/* Clustering info */}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {lead.useCaseCluster && (
+                  <span className="text-xs px-2 py-1 rounded bg-cyan-100 text-cyan-700">
+                    {lead.useCaseCluster}
+                  </span>
+                )}
+                {lead.painPointTribe && (
+                  <span className="text-xs px-2 py-1 rounded bg-orange-100 text-orange-700">
+                    {lead.painPointTribe}
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={onGenerateDemoScript}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+            title="Generate AI demo script"
+          >
+            <FileText className="w-3 h-3" />
+            Demo Script
+          </button>
           <button
             onClick={onEnrich}
             className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors"
@@ -583,6 +708,167 @@ function LeadCard({ lead, onEnrich, onCopyEmail }: { lead: Lead; onEnrich: () =>
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DemoScriptModal({
+  lead,
+  script,
+  loading,
+  onClose,
+  onCopy,
+  onFeedback,
+}: {
+  lead: Lead;
+  script: string | null;
+  loading: boolean;
+  onClose: () => void;
+  onCopy: () => void;
+  onFeedback: (positive: boolean) => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="text-lg font-semibold">Demo Script</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-4 flex-1 overflow-y-auto">
+          <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+            <p className="text-sm font-medium text-slate-900">{lead.name || lead.email}</p>
+            {lead.company && <p className="text-sm text-slate-600">{lead.company}</p>}
+          </div>
+          
+          {loading ? (
+            <div className="flex items-center justify-center py-8 text-slate-500">
+              <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+              Generating demo script...
+            </div>
+          ) : script ? (
+            <div className="prose prose-sm max-w-none">
+              <pre className="whitespace-pre-wrap text-sm bg-slate-50 p-4 rounded-lg">{script}</pre>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-slate-500">
+              No demo script available
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between p-4 border-t bg-slate-50">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onFeedback(true)}
+              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded border border-slate-200 hover:bg-green-50 hover:border-green-300 transition-colors"
+              title="Helpful"
+            >
+              <ThumbsUp className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onFeedback(false)}
+              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-colors"
+              title="Not helpful"
+            >
+              <ThumbsDown className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onCopy}
+              disabled={!script}
+              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Copy className="w-4 h-4" />
+              Copy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TribesView({
+  allLeads,
+  onEnrich,
+  onCopyEmail,
+  onGenerateDemoScript,
+}: {
+  allLeads: Lead[];
+  onEnrich: (lead: Lead) => void;
+  onCopyEmail: (email: string) => void;
+  onGenerateDemoScript: (lead: Lead) => void;
+}) {
+  const clusters = allLeads.reduce((acc, lead) => {
+    const cluster = lead.useCaseCluster || "Uncategorized";
+    if (!acc[cluster]) acc[cluster] = [];
+    acc[cluster].push(lead);
+    return acc;
+  }, {} as Record<string, Lead[]>);
+
+  const clusterColors: Record<string, string> = {
+    "E-commerce": "bg-pink-50 border-pink-200",
+    "B2B SaaS": "bg-blue-50 border-blue-200",
+    "Agency": "bg-purple-50 border-purple-200",
+    "Freelancer": "bg-green-50 border-green-200",
+    "Enterprise": "bg-slate-50 border-slate-200",
+    "Startup": "bg-orange-50 border-orange-200",
+    "Content Creator": "bg-yellow-50 border-yellow-200",
+    "Developer": "bg-indigo-50 border-indigo-200",
+    "Marketing": "bg-red-50 border-red-200",
+    "Consulting": "bg-teal-50 border-teal-200",
+    "Education": "bg-cyan-50 border-cyan-200",
+    "Healthcare": "bg-rose-50 border-rose-200",
+    "Finance": "bg-emerald-50 border-emerald-200",
+    "Other": "bg-gray-50 border-gray-200",
+    "Uncategorized": "bg-gray-100 border-gray-300",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="card p-4 bg-purple-50 border-purple-200">
+        <h3 className="font-semibold text-slate-900 mb-2">Tribes Overview</h3>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(clusters).map(([cluster, leads]) => (
+            <div
+              key={cluster}
+              className={`px-3 py-1.5 rounded-lg border ${clusterColors[cluster] || clusterColors["Other"]}`}
+            >
+              <span className="font-medium">{cluster}</span>
+              <span className="ml-2 text-sm opacity-70">({leads.length})</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {Object.entries(clusters).map(([cluster, leads]) => (
+        <div key={cluster} className="card border-l-4 border-l-purple-600">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-semibold text-slate-900">{cluster}</h4>
+            <span className="text-sm text-slate-500">{leads.length} leads</span>
+          </div>
+          <div className="space-y-2">
+            {leads.slice(0, 5).map((lead) => (
+              <LeadCard
+                key={lead.id}
+                lead={lead}
+                onEnrich={() => onEnrich(lead)}
+                onCopyEmail={() => onCopyEmail(lead.email)}
+                onGenerateDemoScript={() => onGenerateDemoScript(lead)}
+              />
+            ))}
+            {leads.length > 5 && (
+              <div className="text-center py-2 text-sm text-slate-500">
+                +{leads.length - 5} more leads in this tribe
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
