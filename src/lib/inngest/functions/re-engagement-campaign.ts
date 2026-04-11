@@ -1,8 +1,5 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Automated Re-engagement Campaign
@@ -22,6 +19,7 @@ export const reEngagementCampaign = inngest.createFunction(
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const coldWaitlists = await step.run("find-cold-waitlists", async () => {
+      const { db } = await import("@/lib/db");
       return db.waitlist.findMany({
         where: {
           status: "COMPLETED",
@@ -52,6 +50,9 @@ export const reEngagementCampaign = inngest.createFunction(
         // Send re-engagement email to the user (not individual leads)
         // This is a notification to the user to re-engage with their waitlist
         try {
+          const { Resend } = await import("resend");
+          const resend = new Resend(process.env.RESEND_API_KEY || "");
+
           await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL || "hello@convertlist.ai",
             to: waitlist.user.email,
@@ -68,6 +69,7 @@ export const reEngagementCampaign = inngest.createFunction(
           });
 
           // Update waitlist to mark as notified
+          const { db } = await import("@/lib/db");
           await db.waitlist.update({
             where: { id: waitlist.id },
             data: { updatedAt: new Date() },

@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { 
   detectCompanyRelationships, 
   batchAnalyzeCompanyRelationships 
@@ -18,6 +17,7 @@ export const mapNetwork = inngest.createFunction(
 
     // Get all leads for the waitlist
     const leads = await step.run("get-leads", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.findMany({
         where: { waitlistId },
         select: {
@@ -74,6 +74,7 @@ export const mapNetwork = inngest.createFunction(
 
         scoresMap[lead.id] = influenceScore.score;
 
+        const { db } = await import("@/lib/db");
         return db.lead.update({
           where: { id: lead.id },
           data: {

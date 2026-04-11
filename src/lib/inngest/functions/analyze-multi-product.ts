@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { analyzeCrossProductBehavior } from "@/lib/multi-product/behavior";
 import { calculateEarlyAdopterScore } from "@/lib/multi-product/early-adopter";
 import { predictLifetimeValue } from "@/lib/ai/lifetime-value";
@@ -16,6 +15,7 @@ export const analyzeMultiProduct = inngest.createFunction(
 
     // Get user's waitlists and leads
     const user = await step.run("get-user", async () => {
+      const { db } = await import("@/lib/db");
       return db.user.findUnique({
         where: { id: userId },
         include: {
@@ -124,6 +124,7 @@ export const analyzeMultiProduct = inngest.createFunction(
 
     // Update user with multi-product analysis
     await step.run("update-user", async () => {
+      const { db } = await import("@/lib/db");
       return db.user.update({
         where: { id: userId },
         data: {

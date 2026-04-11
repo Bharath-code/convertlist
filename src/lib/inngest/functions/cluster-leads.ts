@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { clusterLead, clusterLeadsBatch } from "@/lib/ai/clustering";
 import { detectPainPointTribe, detectPainPointsBatch } from "@/lib/ai/pain-points";
 import { findLookalikeGroup, findLookalikeGroupsBatch } from "@/lib/ai/lookalike";
@@ -15,6 +14,7 @@ export const clusterLeads = inngest.createFunction(
 
     // Get leads that need clustering (have enrichment data but no clustering)
     const leadsToCluster = await step.run("find-leads-to-cluster", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.findMany({
         where: {
           waitlistId,
@@ -62,6 +62,7 @@ export const clusterLeads = inngest.createFunction(
 
     // Check if user has multiple waitlists and trigger multi-product analysis
     await step.run("check-multi-product", async () => {
+      const { db } = await import("@/lib/db");
       const waitlist = await db.waitlist.findUnique({
         where: { id: waitlistId },
         select: { userId: true },
@@ -117,6 +118,7 @@ async function clusterLeadBatchInternal(
     const avgConfidence = confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length;
 
     // Update lead with clustering data
+    const { db } = await import("@/lib/db");
     await db.lead.update({
       where: { id: lead.id },
       data: {

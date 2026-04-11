@@ -1,9 +1,9 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { generateEngagementHeatmap, getEngagementSummary } from "@/lib/ai/engagement-heatmap";
 import { calculateReadinessScore, getLaunchRecommendation } from "@/lib/ai/readiness-score";
 import { detectSeasonality, getSeasonalityRecommendation } from "@/lib/ai/seasonality";
 import { safeDate } from "@/lib/utils/date-validation";
+import { predictTimeline } from "@/lib/ai/timeline-prediction";
 
 export const analyzeLaunchTiming = inngest.createFunction(
   {
@@ -16,6 +16,7 @@ export const analyzeLaunchTiming = inngest.createFunction(
 
     // Get all leads for the waitlist
     const leads = await step.run("get-leads", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.findMany({
         where: { waitlistId },
         select: {
@@ -80,6 +81,7 @@ export const analyzeLaunchTiming = inngest.createFunction(
 
     // Update waitlist with launch timing data
     await step.run("update-waitlist", async () => {
+      const { db } = await import("@/lib/db");
       await db.waitlist.update({
         where: { id: waitlistId },
         data: {

@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { enrichLinkedIn } from "@/lib/enrichment/linkedin";
 import { detectTechStackFromDomain } from "@/lib/enrichment/tech-stack";
 import { detectFundingStatus } from "@/lib/enrichment/funding";
@@ -17,6 +16,7 @@ export const enrichLeads = inngest.createFunction(
     // Get leads that need enrichment (have score but no enrichment data)
     // Note: After migration, we can check for enrichment fields
     const leadsToEnrich = await step.run("find-leads-to-enrich", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.findMany({
         where: {
           waitlistId,
@@ -88,6 +88,7 @@ async function enrichLeadBatch(leads: Array<{ id: string; email: string; company
       const avgConfidence = confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length;
 
       // Update lead with enrichment data
+      const { db } = await import("@/lib/db");
       await db.lead.update({
         where: { id: lead.id },
         data: {

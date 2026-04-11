@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { fingerprintDomain, batchFingerprintLeads } from "@/lib/competitors/fingerprinting";
 import { analyzeFeatureGaps } from "@/lib/ai/feature-gap";
 import { calculateSwitchingCost, batchCalculateSwitchingCosts } from "@/lib/ai/switching-cost";
@@ -15,6 +14,7 @@ export const analyzeCompetitors = inngest.createFunction(
 
     // Get all leads for the waitlist with enrichment data
     const leads = await step.run("get-leads", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.findMany({
         where: { waitlistId },
         select: {
@@ -88,6 +88,7 @@ export const analyzeCompetitors = inngest.createFunction(
           }
         }
 
+        const { db } = await import("@/lib/db");
         return db.lead.update({
           where: { id: lead.id },
           data: {

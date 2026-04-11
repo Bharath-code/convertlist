@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { detectWillingnessToPay, calculateAggregateWillingnessToPay } from "@/lib/ai/willingness-to-pay";
 import { recommendTiers, getRevenueProjection } from "@/lib/ai/tier-recommendation";
 import { generateDiscountStrategy } from "@/lib/ai/discount-strategy";
@@ -16,6 +15,7 @@ export const analyzePricing = inngest.createFunction(
 
     // Get all leads with enrichment data
     const leads = await step.run("get-leads", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.findMany({
         where: { waitlistId },
         select: {
@@ -61,6 +61,7 @@ export const analyzePricing = inngest.createFunction(
 
     // Update waitlist with pricing data
     await step.run("update-waitlist", async () => {
+      const { db } = await import("@/lib/db");
       await db.waitlist.update({
         where: { id: waitlistId },
         data: {

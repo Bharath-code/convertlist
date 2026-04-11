@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { calculateLaunchReadiness } from "@/lib/launch/readiness";
 import { recommendLaunchDate } from "@/lib/ai/launch-date";
 import { generateEngagementHeatmap } from "@/lib/launch/engagement-heatmap";
@@ -16,6 +15,7 @@ export const launchDayCommand = inngest.createFunction(
 
     // Get waitlist and leads
     const waitlist = await step.run("get-waitlist", async () => {
+      const { db } = await import("@/lib/db");
       return db.waitlist.findUnique({
         where: { id: waitlistId },
         include: {
@@ -79,6 +79,7 @@ export const launchDayCommand = inngest.createFunction(
 
     // Update waitlist with launch analysis
     await step.run("update-waitlist", async () => {
+      const { db } = await import("@/lib/db");
       return db.waitlist.update({
         where: { id: waitlistId },
         data: {

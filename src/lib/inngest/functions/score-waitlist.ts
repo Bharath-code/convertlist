@@ -1,10 +1,6 @@
 import { inngest } from "@/lib/inngest/client";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { db } from "@/lib/db";
 import { generateReplyAddress } from "@/lib/email/reply-address";
 import { getLearnedWeights, trackLeadScored } from "@/lib/scoring/conversion-analytics";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export const scoreWaitlist = inngest.createFunction(
   {
@@ -16,6 +12,7 @@ export const scoreWaitlist = inngest.createFunction(
     const waitlistId = event.data.waitlistId;
 
     await step.run("update-status-to-processing", async () => {
+      const { db } = await import("@/lib/db");
       await db.waitlist.update({
         where: { id: waitlistId },
         data: { status: "PROCESSING" },
@@ -23,11 +20,13 @@ export const scoreWaitlist = inngest.createFunction(
     });
 
     const totalLeads = await step.run("count-leads", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.count({ where: { waitlistId, score: null } });
     });
 
     if (totalLeads === 0) {
       await step.run("complete-empty", async () => {
+        const { db } = await import("@/lib/db");
         await db.waitlist.update({
           where: { id: waitlistId },
           data: { status: "COMPLETED", processedLeads: 0 },
@@ -41,6 +40,7 @@ export const scoreWaitlist = inngest.createFunction(
 
     while (processed < totalLeads) {
       const leads = await step.run(`fetch-batch-${processed / BATCH_SIZE}`, async () => {
+        const { db } = await import("@/lib/db");
         return db.lead.findMany({
           where: { waitlistId, score: null },
           take: BATCH_SIZE,
@@ -58,6 +58,7 @@ export const scoreWaitlist = inngest.createFunction(
       processed += leads.length;
 
       await step.run(`update-progress-${processed}`, async () => {
+        const { db } = await import("@/lib/db");
         await db.waitlist.update({
           where: { id: waitlistId },
           data: { processedLeads: processed },
@@ -66,6 +67,7 @@ export const scoreWaitlist = inngest.createFunction(
     }
 
     await step.run("mark-complete", async () => {
+      const { db } = await import("@/lib/db");
       await db.waitlist.update({
         where: { id: waitlistId },
         data: { status: "COMPLETED" },
@@ -96,6 +98,8 @@ interface LeadInput {
 }
 
 async function scoreLeadBatch(leads: LeadInput[]) {
+  const { db } = await import("@/lib/db");
+
   // Get learned weights from conversion analytics
   const learnedWeights = await getLearnedWeights();
 
@@ -279,6 +283,9 @@ function estimateIntentScore(note: string): number {
 }
 
 async function classifyIntentBatch(leads: ScoredLead[]): Promise<number[]> {
+  const { GoogleGenerativeAI } = await import("@google/generative-ai");
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
   const prompt = `Analyze these waitlist signup notes and classify intent level:
 
 ${leads.map((l, i) => `${i + 1}. "${l.signupNote}"`).join("\n")}

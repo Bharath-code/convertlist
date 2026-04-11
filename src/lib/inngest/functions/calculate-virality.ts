@@ -1,5 +1,4 @@
 import { inngest } from "@/lib/inngest/client";
-import { db } from "@/lib/db";
 import { detectSharePropensity } from "@/lib/ai/share-propensity";
 import { calculateNetworkReach } from "@/lib/enrichment/network-reach";
 import { calculateAdvocatePotential, getAdvocateOutreachRecommendation } from "@/lib/ai/advocate-potential";
@@ -15,6 +14,7 @@ export const calculateVirality = inngest.createFunction(
 
     // Get all leads with enrichment data
     const leads = await step.run("get-leads", async () => {
+      const { db } = await import("@/lib/db");
       return db.lead.findMany({
         where: { waitlistId },
         select: {
@@ -55,6 +55,7 @@ export const calculateVirality = inngest.createFunction(
     // Note: This requires Prisma migration to add virality fields to Lead model
     const viralityStats = await step.run("calculate-stats", async () => {
       try {
+        const { db } = await import("@/lib/db");
         const updatedLeads = await db.lead.findMany({
           where: { waitlistId },
           select: { viralityScore: true, advocatePotential: true } as any,
@@ -113,6 +114,7 @@ async function processViralityBatch(
       );
 
       // Update lead with virality data
+      const { db } = await import("@/lib/db");
       await db.lead.update({
         where: { id: lead.id },
         data: {
