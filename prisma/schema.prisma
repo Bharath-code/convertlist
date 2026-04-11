@@ -175,8 +175,8 @@ model ConversionAnalytics {
 
 enum Plan {
   FREE
-  STARTER
   PRO
+  PRO_PLUS
   LAUNCH
 }
 

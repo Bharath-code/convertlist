@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Upload, FileText, ArrowRight, ArrowUpRight, AlertCircle, Download, X } from "lucide-react";
+import { Button } from "@/components/patterns";
+import { Card, CardContent } from "@/components/patterns";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -178,8 +180,8 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
   return (
     <div className="max-w-2xl mx-auto">
       {isFree && (
-        <div className="card mb-6 border border-amber-200 bg-amber-50 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <Card variant="default" className="mb-6 border border-amber-200 bg-amber-50 flex items-center justify-between gap-4">
+          <CardContent className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-amber-900">
@@ -194,14 +196,14 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
                 </p>
               )}
             </div>
-          </div>
+          </CardContent>
           <Link
             href="/pricing"
             className="text-sm font-medium text-amber-900 hover:text-amber-700 flex items-center gap-1 flex-shrink-0"
           >
             Upgrade <ArrowUpRight className="w-4 h-4" />
           </Link>
-        </div>
+        </Card>
       )}
 
       <div className="mb-8">
@@ -212,35 +214,39 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
       </div>
 
       {errorMsg && (
-        <div className="card mb-6 border border-red-200 bg-red-50">
-          <p className="text-sm text-red-700">{errorMsg}</p>
-          {errorMsg.includes("limit") && (
-            <Link href="/pricing" className="text-sm font-medium text-red-900 hover:text-red-700 mt-1 inline-block">
-              Upgrade to continue &rarr;
-            </Link>
-          )}
-        </div>
+        <Card variant="default" className="mb-6 border border-red-200 bg-red-50">
+          <CardContent>
+            <p className="text-sm text-red-700">{errorMsg}</p>
+            {errorMsg.includes("limit") && (
+              <Link href="/pricing" className="text-sm font-medium text-red-900 hover:text-red-700 mt-1 inline-block">
+                Upgrade to continue &rarr;
+              </Link>
+            )}
+          </CardContent>
+        </Card>
       )}
 
-      <div className="card mb-6">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
-          Waitlist Name
-        </label>
-        <input
-          type="text"
-          value={waitlistName}
-          onChange={(e) => setWaitlistName(e.target.value)}
-          placeholder="My SaaS Waitlist"
-          className={`input ${waitlistName.trim() ? "border-green-300 focus:ring-green-500" : "border-slate-200"}`}
-          aria-invalid={!waitlistName.trim()}
-          aria-describedby="waitlist-name-error"
-        />
-        {!waitlistName.trim() && (
-          <p id="waitlist-name-error" className="text-xs text-red-600 mt-1">
-            Waitlist name is required
-          </p>
-        )}
-      </div>
+      <Card variant="default" className="mb-6">
+        <CardContent>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Waitlist Name
+          </label>
+          <input
+            type="text"
+            value={waitlistName}
+            onChange={(e) => setWaitlistName(e.target.value)}
+            placeholder="My SaaS Waitlist"
+            className={`input ${waitlistName.trim() ? "border-green-300 focus:ring-green-500" : "border-slate-200"}`}
+            aria-invalid={!waitlistName.trim()}
+            aria-describedby="waitlist-name-error"
+          />
+          {!waitlistName.trim() && (
+            <p id="waitlist-name-error" className="text-xs text-red-600 mt-1">
+              Waitlist name is required
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="flex gap-4 mb-6">
         <button
@@ -268,7 +274,7 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
       </div>
 
       {mode === "csv" ? (
-        <div className="card">
+        <Card variant="default">
           <div className="flex items-center justify-between mb-4">
             <label htmlFor="csv-upload" className="text-sm font-medium text-slate-700">
               Upload CSV File
@@ -376,9 +382,9 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
               john@example.com,John Doe,Acme Inc,I need this for my startup,referral,2024-01-15
             </p>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="card">
+        <Card variant="default">
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Email List
           </label>
@@ -396,38 +402,30 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
           <p className="mt-2 text-xs text-slate-500">
             Emails will be assigned an &ldquo;imported&rdquo; source and current timestamp
           </p>
-        </div>
+        </Card>
       )}
 
       <div className="flex gap-3 mt-6">
         {file && !uploading && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleCancel}
-            className="btn-secondary flex items-center justify-center gap-2"
           >
             <X className="w-4 h-4" />
             Cancel
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="button"
+          variant="primary"
           onClick={handleSubmit}
           disabled={uploading}
-          className="btn-primary flex items-center justify-center gap-2"
+          loading={uploading}
         >
-          {uploading ? (
-            <>
-              Uploading...
-              <ArrowRight className="w-4 h-4 animate-spin" />
-            </>
-          ) : (
-            <>
-              Start Analysis
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
-        </button>
+          Start Analysis
+          <ArrowRight className="w-4 h-4" />
+        </Button>
       </div>
 
       {uploading && (

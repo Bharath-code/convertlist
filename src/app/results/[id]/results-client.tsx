@@ -22,9 +22,14 @@ import {
   Zap,
   ChevronRight,
   X,
+  Sun,
+  Snowflake,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import Link from "next/link";
 import { LeadCardSkeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/patterns";
 import EnrichmentModal from "./enrichment-modal";
 import SequenceBuilder from "./sequences/sequence-builder";
 import type { EnrichmentAnswers } from "./enrichment-modal";
@@ -305,8 +310,10 @@ export default function ResultsClient({
               Upgrade to Starter for 500 leads/mo or Pro for 5,000 leads/mo
             </p>
           </div>
-          <Link href="/pricing" className="btn-primary text-sm flex items-center gap-1 flex-shrink-0">
-            Upgrade <ArrowRight className="w-4 h-4" />
+          <Link href="/pricing">
+            <Button variant="primary" size="sm">
+              Upgrade <ArrowRight className="w-4 h-4" />
+            </Button>
           </Link>
         </div>
       )}
@@ -320,20 +327,25 @@ export default function ResultsClient({
           </p>
         </div>
         <div className="flex gap-3">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={exportToCSV}
-            className="btn-secondary text-sm flex items-center gap-1"
             aria-label="Export all leads to CSV"
           >
             <Download className="w-4 h-4" />
             Export
-          </button>
-          <Link href="/dashboard" className="btn-secondary text-sm">
-            &larr; Dashboard
+          </Button>
+          <Link href="/dashboard">
+            <Button variant="secondary" size="sm">
+              &larr; Dashboard
+            </Button>
           </Link>
-          <Link href="/upload" className="btn-primary text-sm flex items-center gap-1">
-            <RefreshCw className="w-4 h-4" />
-            New Upload
+          <Link href="/upload">
+            <Button variant="primary" size="sm">
+              <RefreshCw className="w-4 h-4" />
+              New Upload
+            </Button>
           </Link>
         </div>
       </div>

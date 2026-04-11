@@ -11,6 +11,8 @@ import {
   Plus,
 } from "lucide-react";
 import { EmptyWaitlist } from "@/components/ui/empty-state";
+import { Button } from "@/components/patterns";
+import { Card, CardContent } from "@/components/patterns";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -106,24 +108,26 @@ export default async function DashboardPage() {
             {waitlists.length} waitlist{waitlists.length !== 1 ? "es" : ""} &middot;{" "}
             {user.plan === "FREE"
               ? "Free tier"
-              : user.plan === "STARTER"
-              ? "Starter plan"
               : user.plan === "PRO"
               ? "Pro plan"
+              : user.plan === "PRO_PLUS"
+              ? "Pro Plus"
               : user.plan === "LAUNCH"
               ? "Lifetime"
               : "Free tier"}
           </p>
         </div>
-        <Link href="/upload" className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          New Waitlist
+        <Link href="/upload">
+          <Button variant="primary" size="md">
+            <Plus className="w-4 h-4" />
+            New Waitlist
+          </Button>
         </Link>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
-          <div key={stat.label} className="card">
+          <Card key={stat.label} variant="default" className="p-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-slate-600">{stat.label}</span>
               <stat.icon className={`w-4 h-4 ${stat.color}`} />
@@ -136,7 +140,7 @@ export default async function DashboardPage() {
                 <span className="text-sm text-slate-500 mb-1">{stat.sub}</span>
               )}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -161,10 +165,11 @@ export default async function DashboardPage() {
         <div className="max-w-2xl mx-auto">
           <EmptyWaitlist />
           
-          <div className="card border-2 border-dashed border-slate-200 mt-8">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">
-              Get started in 3 steps
-            </h3>
+          <Card variant="default" className="border-2 border-dashed border-slate-200 mt-8">
+            <CardContent>
+              <h3 className="text-lg font-bold text-slate-900 mb-6">
+                Get started in 3 steps
+              </h3>
 
             <div className="space-y-4">
               <div className="flex items-start gap-4">
@@ -208,15 +213,16 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-600">
-                <strong>Free plan:</strong> 50 lead analyses, no credit card required.
-              </p>
-              <Link href="/pricing" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
-                View pricing &rarr;
-              </Link>
-            </div>
-          </div>
+              <div className="mt-8 p-4 bg-slate-50 rounded-lg">
+                <p className="text-sm text-slate-600">
+                  <strong>Free plan:</strong> 50 lead analyses, no credit card required.
+                </p>
+                <Link href="/pricing" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+                  View pricing &rarr;
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <div className="space-y-3">
@@ -228,8 +234,8 @@ export default async function DashboardPage() {
                   ? `/results/${waitlist.id}`
                   : `/processing/${waitlist.id}`
               }
-              className="card flex items-center justify-between hover:border-slate-300 transition-colors"
             >
+              <Card variant="default" className="flex items-center justify-between hover:border-slate-300 transition-colors">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-medium text-slate-900">{waitlist.name}</h3>
@@ -252,7 +258,8 @@ export default async function DashboardPage() {
                   {waitlist.leads.filter((l) => l.segment === "HOT").length} hot
                 </p>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400" />
+                <ArrowUpRight className="w-4 h-4 text-slate-400" />
+              </Card>
             </Link>
           ))}
         </div>

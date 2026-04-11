@@ -9,6 +9,8 @@ import {
   CheckCircle,
   Star,
 } from "lucide-react";
+import { Button } from "@/components/patterns";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/patterns";
 
 export default function LandingPage() {
   return (
@@ -27,8 +29,8 @@ export default function LandingPage() {
             <Link href="/sign-in" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
               Sign in
             </Link>
-            <Link href="/sign-up" className="btn-primary text-sm">
-              Start free
+            <Link href="/sign-up">
+              <Button variant="primary" size="sm">Start free</Button>
             </Link>
           </nav>
         </div>
@@ -59,12 +61,11 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Link
-              href="/sign-up"
-              className="group bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-xl text-lg font-medium flex items-center gap-2 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              Analyze your waitlist free
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <Link href="/sign-up">
+              <Button variant="primary" size="lg">
+                Analyze your waitlist free
+                <ArrowRight className="w-5 h-5" />
+              </Button>
             </Link>
             <span className="text-sm text-slate-500">25 leads free, no credit card</span>
           </div>
@@ -270,9 +271,11 @@ export default function LandingPage() {
             Most founders email their whole list and get 2% replies.
             Score first, email the right people, get 20%.
           </p>
-          <Link href="/sign-up" className="btn-primary px-8 py-3 text-lg inline-flex items-center gap-2">
-            Analyze your waitlist free
-            <ArrowRight className="w-5 h-5" />
+          <Link href="/sign-up">
+            <Button variant="primary" size="lg">
+              Analyze your waitlist free
+              <ArrowRight className="w-5 h-5" />
+            </Button>
           </Link>
           <p className="text-sm text-slate-500 mt-3">25 leads free, no credit card required</p>
         </div>
@@ -339,14 +342,14 @@ function Step({
   detail: string;
 }) {
   return (
-    <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+    <Card variant="default">
       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-900 to-slate-700 text-white flex items-center justify-center text-lg font-bold mb-6 shadow-md">
         {number}
       </div>
       <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
       <p className="text-slate-600 text-base mb-4 leading-relaxed">{description}</p>
       <p className="text-xs text-slate-400 font-mono bg-slate-50 px-3 py-2 rounded-lg inline-block">{detail}</p>
-    </div>
+    </Card>
   );
 }
 
@@ -360,7 +363,7 @@ function Feature({
   description: string;
 }) {
   return (
-    <div className="flex gap-4 p-8 rounded-2xl border border-slate-200 bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+    <Card variant="default" className="flex gap-4">
       <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0">
         <Icon className="w-7 h-7 text-slate-700" />
       </div>
@@ -368,7 +371,7 @@ function Feature({
         <h3 className="font-bold text-slate-900 mb-2 text-lg">{title}</h3>
         <p className="text-base text-slate-600 leading-relaxed">{description}</p>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -480,7 +483,7 @@ function Testimonial({
   rating: number;
 }) {
   return (
-    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+    <Card variant="default" className="p-6">
       <div className="flex items-center gap-1 mb-4">
         {[...Array(rating)].map((_, i) => (
           <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
@@ -496,7 +499,7 @@ function Testimonial({
           <p className="text-sm text-slate-500">{role}</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -508,7 +511,7 @@ function FAQItem({
   answer: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <Card variant="default" className="p-0 overflow-hidden">
       <details className="group">
         <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
           <span className="font-semibold text-slate-900">{question}</span>
@@ -518,6 +521,6 @@ function FAQItem({
           <p className="text-slate-600 leading-relaxed">{answer}</p>
         </div>
       </details>
-    </div>
+    </Card>
   );
 }
