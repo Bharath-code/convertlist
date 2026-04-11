@@ -4,10 +4,10 @@ import { generateDemoScript } from "@/lib/ai/demo-script";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const leadId = params.id;
+    const { id: leadId } = await params;
 
     // Fetch lead data
     const lead = await db.lead.findUnique({
