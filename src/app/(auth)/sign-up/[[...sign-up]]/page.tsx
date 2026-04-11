@@ -3,8 +3,7 @@ import { SignUp } from "@clerk/nextjs";
 export default function SignUpPage() {
   return (
     <SignUp 
-      routing="hash" 
-      forceRedirectUrl="/dashboard"
+      routing="hash"
     />
   );
 }

@@ -6,6 +6,8 @@ import {
   isInstantlyConfigured,
 } from "@/lib/instantly/integration";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();

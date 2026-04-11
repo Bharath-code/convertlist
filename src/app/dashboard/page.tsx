@@ -16,7 +16,9 @@ import { Card, CardContent } from "@/components/patterns";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
   const user = await db.user.findUnique({
     where: { clerkId: userId },
@@ -37,7 +39,7 @@ export default async function DashboardPage() {
     },
   });
 
-  if (!user) redirect("/sign-in");
+  if (!user) return null;
 
   const waitlists = user.waitlists;
 

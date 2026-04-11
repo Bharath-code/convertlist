@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/webhooks/verify-signature";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Resend Inbound Webhook Handler
  * 

@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { trackConversion } from "@/lib/scoring/conversion-analytics";
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

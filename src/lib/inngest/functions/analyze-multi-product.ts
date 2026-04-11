@@ -45,20 +45,28 @@ export const analyzeMultiProduct = inngest.createFunction(
           ? new Date(waitlist.createdAt)
           : waitlist.createdAt;
         const firstLeadCreatedAt = waitlist.leads[0]?.createdAt;
-        const firstLeadDate = typeof firstLeadCreatedAt === 'string'
-          ? new Date(firstLeadCreatedAt)
-          : firstLeadCreatedAt;
+        const firstLeadDate = firstLeadCreatedAt
+          ? (typeof firstLeadCreatedAt === 'string' ? new Date(firstLeadCreatedAt) : firstLeadCreatedAt)
+          : null;
+
+        // Validate dates
+        if (createdAt && isNaN(createdAt.getTime())) {
+          return null;
+        }
+        if (firstLeadDate && isNaN(firstLeadDate.getTime())) {
+          return null;
+        }
 
         return {
           productId: waitlist.id,
           productName: waitlist.name,
           signupDate: createdAt as Date,
-          timeToConvert: firstLeadDate && createdAt
+          timeToConvert: firstLeadDate && createdAt && !isNaN((firstLeadDate as Date).getTime()) && !isNaN((createdAt as Date).getTime())
             ? Math.floor((new Date(firstLeadDate).getTime() - (createdAt as Date).getTime()) / (1000 * 60 * 60))
             : undefined,
           converted: waitlist.leads.some(l => l.status === 'PAID'),
         };
-      });
+      }).filter(Boolean) as any[];
 
       const behavior = analyzeCrossProductBehavior(productHistory as any);
       return {
@@ -73,10 +81,20 @@ export const analyzeMultiProduct = inngest.createFunction(
       const signupDelays = user.waitlists.map(waitlist => {
         const firstLead = waitlist.leads[0];
         if (!firstLead || !firstLead.createdAt) return 0;
+        
         const waitlistCreatedAt = typeof waitlist.createdAt === 'string'
           ? new Date(waitlist.createdAt)
           : waitlist.createdAt;
-        return Math.floor((new Date(firstLead.createdAt).getTime() - waitlistCreatedAt.getTime()) / (1000 * 60 * 60));
+        
+        const firstLeadCreatedAt = typeof firstLead.createdAt === 'string'
+          ? new Date(firstLead.createdAt)
+          : firstLead.createdAt;
+        
+        // Validate dates
+        if (!waitlistCreatedAt || isNaN(waitlistCreatedAt.getTime())) return 0;
+        if (!firstLeadCreatedAt || isNaN(firstLeadCreatedAt.getTime())) return 0;
+        
+        return Math.floor((firstLeadCreatedAt.getTime() - waitlistCreatedAt.getTime()) / (1000 * 60 * 60));
       });
 
       return calculateEarlyAdopterScore(signupDelays, user.waitlists.length);

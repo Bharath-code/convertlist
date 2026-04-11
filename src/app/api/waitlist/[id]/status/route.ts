@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -22,6 +24,11 @@ export async function GET(
         status: true,
         totalLeads: true,
         processedLeads: true,
+        user: {
+          select: {
+            clerkId: true,
+          },
+        },
       },
     });
 
@@ -29,7 +36,7 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (waitlist.userId !== userId) {
+    if (waitlist.user.clerkId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

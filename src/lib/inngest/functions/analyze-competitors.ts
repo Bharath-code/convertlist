@@ -60,7 +60,7 @@ export const analyzeCompetitors = inngest.createFunction(
         leadsWithCompetitors.map((lead, i) => ({
           competitorId: fingerprintResults[leads.indexOf(lead)].competitorIds[0],
           signupNote: lead.signupNote || undefined,
-          companySize: (lead as any).companySize || undefined,
+          companySize: (lead as any).companySize ?? undefined,
         }))
       );
     });

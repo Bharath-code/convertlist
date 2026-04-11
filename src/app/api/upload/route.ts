@@ -3,10 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { inngest } from "@/lib/inngest/client";
 
+export const dynamic = 'force-dynamic';
+
 const PLAN_LEAD_LIMITS: Record<string, number> = {
   FREE: 25,
-  STARTER: 500,
-  PRO: 5000,
+  PRO: 500,
+  PRO_PLUS: 5000,
   LAUNCH: 5000,
 };
 
@@ -104,6 +106,8 @@ export async function POST(req: Request) {
       await inngest.send({
         name: "waitlist/created",
         data: { waitlistId: waitlist.id },
+      }).catch((error) => {
+        console.error("Failed to send inngest event:", error);
       });
 
       return NextResponse.json({ waitlistId: waitlist.id, leadCount });
@@ -160,6 +164,8 @@ export async function POST(req: Request) {
       await inngest.send({
         name: "waitlist/created",
         data: { waitlistId: waitlist.id },
+      }).catch((error) => {
+        console.error("Failed to send inngest event:", error);
       });
 
       return NextResponse.json({ waitlistId: waitlist.id, leadCount });

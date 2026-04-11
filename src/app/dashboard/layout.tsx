@@ -1,5 +1,4 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { DashboardSkeleton } from "./dashboard-client";
 
@@ -9,7 +8,6 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
 
   return (
     <div className="min-h-screen bg-slate-50">

@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { enrichLead, isClearbitConfigured } from "@/lib/enrichment/clearbit";
 
+export const dynamic = 'force-dynamic';
+
 type EnrichmentAnswers = {
   urgency: "low" | "medium" | "high";
   budget: "none" | "small" | "significant" | "enterprise";

@@ -10,12 +10,12 @@ export default async function ResultsPage({
   params: Promise<{ id: string }>;
 }) {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  if (!userId) return null;
 
   const { id } = await params;
 
   const waitlist = await db.waitlist.findUnique({
-    where: { id, userId },
+    where: { id, userId: userId || undefined },
     include: {
       leads: {
         orderBy: [{ segment: "asc" }, { score: "desc" }],
@@ -23,9 +23,9 @@ export default async function ResultsPage({
     },
   });
 
-  const user = await db.user.findUnique({ where: { clerkId: userId } });
-
   if (!waitlist) redirect("/dashboard");
+
+  const user = await db.user.findUnique({ where: { clerkId: userId } });
 
   const hotLeads = waitlist.leads.filter((l) => l.segment === "HOT");
   const warmLeads = waitlist.leads.filter((l) => l.segment === "WARM");

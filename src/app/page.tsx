@@ -11,14 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/patterns";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/patterns";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 
-export default async function LandingPage() {
-  const { userId } = await auth();
-  if (userId) {
-    redirect("/dashboard");
-  }
+export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}

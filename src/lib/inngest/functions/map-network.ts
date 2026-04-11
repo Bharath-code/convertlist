@@ -67,9 +67,9 @@ export const mapNetwork = inngest.createFunction(
         const influenceScore = calculateInfluenceScore(
           companyAnalysis,
           communityOverlap,
-          (lead as any).socialProofScore || undefined,
-          (lead as any).twitterFollowers || undefined,
-          (lead as any).githubActivity || undefined
+          (lead as any).socialProofScore ?? undefined,
+          (lead as any).twitterFollowers ?? undefined,
+          (lead as any).githubActivity ?? undefined
         );
 
         scoresMap[lead.id] = influenceScore.score;
