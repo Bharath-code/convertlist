@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import ResultsClient from "./results-client";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export default async function ResultsPage({
   params,
@@ -33,18 +34,20 @@ export default async function ResultsPage({
   const top10Percent = Math.ceil(waitlist.leads.length * 0.1);
 
   return (
-    <ResultsClient
-      waitlist={{
-        id: waitlist.id,
-        name: waitlist.name,
-        totalLeads: waitlist.totalLeads,
-      }}
-      hotLeads={hotLeads.map(serializeLead)}
-      warmLeads={warmLeads.map(serializeLead)}
-      coldLeads={coldLeads.map(serializeLead)}
-      top10Percent={top10Percent}
-      userPlan={user?.plan ?? "FREE"}
-    />
+    <ErrorBoundary>
+      <ResultsClient
+        waitlist={{
+          id: waitlist.id,
+          name: waitlist.name,
+          totalLeads: waitlist.totalLeads,
+        }}
+        hotLeads={hotLeads.map(serializeLead)}
+        warmLeads={warmLeads.map(serializeLead)}
+        coldLeads={coldLeads.map(serializeLead)}
+        top10Percent={top10Percent}
+        userPlan={user?.plan ?? "FREE"}
+      />
+    </ErrorBoundary>
   );
 }
 

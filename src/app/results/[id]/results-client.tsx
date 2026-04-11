@@ -1,32 +1,30 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import {
   Search,
-  ChevronRight,
-  Flame,
-  Sun,
-  Snowflake,
-  Star,
-  RefreshCw,
-  Zap,
-  Plus,
-  ArrowRight,
   Download,
-  Copy,
-  Check,
-  Mail,
-  FileText,
-  X,
-  ThumbsUp,
-  ThumbsDown,
-  DollarSign,
-  Rocket,
+  RefreshCw,
+  Plus,
+  Star,
+  Users,
+  Flame,
   Target,
+  Rocket,
+  DollarSign,
+  Mail,
+  ArrowRight,
+  Check,
+  Copy,
+  FileText,
+  Zap,
+  ChevronRight,
+  X,
 } from "lucide-react";
+import Link from "next/link";
+import { LeadCardSkeleton } from "@/components/ui/skeleton";
 import EnrichmentModal from "./enrichment-modal";
 import SequenceBuilder from "./sequences/sequence-builder";
 import type { EnrichmentAnswers } from "./enrichment-modal";
@@ -115,7 +113,28 @@ export default function ResultsClient({
   userPlan = "FREE",
 }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"HOT" | "WARM" | "COLD" | "TRIBES" | "PRICING" | "LAUNCH" | "VIRALITY" | "COMPETITORS">("HOT");
+  const [activeTab, setActiveTab] = useState<"LEADS" | "INSIGHTS" | "COMPETITORS" | "LAUNCH">("LEADS");
+  const [segmentFilter, setSegmentFilter] = useState<"ALL" | "HOT" | "WARM" | "COLD">("ALL");
+  const [insightView, setInsightView] = useState<"TRIBES" | "PRICING" | "VIRALITY">("TRIBES");
+  const [focusedTab, setFocusedTab] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const tabs = ["LEADS", "INSIGHTS", "COMPETITORS", "LAUNCH"] as const;
+
+  const handleTabKeyDown = (e: React.KeyboardEvent, tabIndex: number) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setFocusedTab((tabIndex + 1) % tabs.length);
+      setActiveTab(tabs[(tabIndex + 1) % tabs.length]);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setFocusedTab((tabIndex - 1 + tabs.length) % tabs.length);
+      setActiveTab(tabs[(tabIndex - 1 + tabs.length) % tabs.length]);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setActiveTab(tabs[tabIndex]);
+    }
+  };
   const [search, setSearch] = useState("");
   const [showTop10, setShowTop10] = useState(false);
   const [enrichingLead, setEnrichingLead] = useState<Lead | null>(null);
@@ -124,6 +143,10 @@ export default function ResultsClient({
   const [demoScriptLead, setDemoScriptLead] = useState<Lead | null>(null);
   const [demoScript, setDemoScript] = useState<string | null>(null);
   const [loadingDemoScript, setLoadingDemoScript] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, [hotLeads, warmLeads, coldLeads]);
 
   const filteredLeads = useMemo(() => {
     const source = showTop10 ? hotLeads.slice(0, top10Percent) : getCurrentLeads();
@@ -261,9 +284,10 @@ export default function ResultsClient({
   };
 
   const getCurrentLeads = (): Lead[] => {
-    if (activeTab === "HOT") return hotLeads;
-    if (activeTab === "WARM") return warmLeads;
-    return coldLeads;
+    if (segmentFilter === "HOT") return hotLeads;
+    if (segmentFilter === "WARM") return warmLeads;
+    if (segmentFilter === "COLD") return coldLeads;
+    return [...hotLeads, ...warmLeads, ...coldLeads];
   };
 
   const isFreeUser = userPlan === "FREE";
@@ -392,142 +416,194 @@ export default function ResultsClient({
         </div>
 
         {!showTop10 && (
-          <div className="flex gap-2 flex-wrap">
-            {(["HOT", "WARM", "COLD"] as const).map((seg) => {
-              const c = segmentConfig[seg];
-              const count = seg === "HOT" ? hotLeads.length : seg === "WARM" ? warmLeads.length : coldLeads.length;
-              return (
-                <button
-                  key={seg}
-                  onClick={() => setActiveTab(seg)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                    activeTab === seg
-                      ? `${c.bg} border${c.border} text-slate-900`
-                      : "border-slate-200 text-slate-600 hover:border-slate-300"
-                  }`}
-                  aria-label={`Filter by ${c.label}`}
-                >
-                  <c.icon className="w-4 h-4" />
-                  {c.label}
-                  <span className="text-xs opacity-70">({count})</span>
-                </button>
-              );
-            })}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {/* Main Tabs */}
             <button
-              onClick={() => setActiveTab("TRIBES")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                activeTab === "TRIBES"
+              onClick={() => setActiveTab("LEADS")}
+              onKeyDown={(e) => handleTabKeyDown(e, 0)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
+                activeTab === "LEADS"
+                  ? "bg-slate-900 border-slate-900 text-white"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+              role="tab"
+              aria-selected={activeTab === "LEADS"}
+              aria-controls="panel-leads"
+              tabIndex={focusedTab === 0 ? 0 : -1}
+            >
+              <Users className="w-4 h-4" />
+              Leads
+            </button>
+            <button
+              onClick={() => setActiveTab("INSIGHTS")}
+              onKeyDown={(e) => handleTabKeyDown(e, 1)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
+                activeTab === "INSIGHTS"
                   ? "bg-purple-50 border-purple-200 text-slate-900"
                   : "border-slate-200 text-slate-600 hover:border-slate-300"
               }`}
-              aria-label="View tribes"
+              role="tab"
+              aria-selected={activeTab === "INSIGHTS"}
+              aria-controls="panel-insights"
+              tabIndex={focusedTab === 1 ? 0 : -1}
             >
               <Flame className="w-4 h-4" />
-              Tribes
-            </button>
-            <button
-              onClick={() => setActiveTab("PRICING")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                activeTab === "PRICING"
-                  ? "bg-green-50 border-green-200 text-slate-900"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-              aria-label="View pricing intelligence"
-            >
-              <DollarSign className="w-4 h-4" />
-              Pricing
-            </button>
-            <button
-              onClick={() => setActiveTab("LAUNCH")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                activeTab === "LAUNCH"
-                  ? "bg-blue-50 border-blue-200 text-slate-900"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-              aria-label="View launch timing"
-            >
-              <Rocket className="w-4 h-4" />
-              Launch
-            </button>
-            <button
-              onClick={() => setActiveTab("VIRALITY")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                activeTab === "VIRALITY"
-                  ? "bg-pink-50 border-pink-200 text-slate-900"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-              aria-label="View virality analytics"
-            >
-              <Flame className="w-4 h-4" />
-              Virality
+              Insights
             </button>
             <button
               onClick={() => setActiveTab("COMPETITORS")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+              onKeyDown={(e) => handleTabKeyDown(e, 2)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
                 activeTab === "COMPETITORS"
                   ? "bg-orange-50 border-orange-200 text-slate-900"
                   : "border-slate-200 text-slate-600 hover:border-slate-300"
               }`}
-              aria-label="View competitor insights"
+              role="tab"
+              aria-selected={activeTab === "COMPETITORS"}
+              aria-controls="panel-competitors"
+              tabIndex={focusedTab === 2 ? 0 : -1}
             >
               <Target className="w-4 h-4" />
               Competitors
             </button>
+            <button
+              onClick={() => setActiveTab("LAUNCH")}
+              onKeyDown={(e) => handleTabKeyDown(e, 3)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
+                activeTab === "LAUNCH"
+                  ? "bg-blue-50 border-blue-200 text-slate-900"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+              role="tab"
+              aria-selected={activeTab === "LAUNCH"}
+              aria-controls="panel-launch"
+              tabIndex={focusedTab === 3 ? 0 : -1}
+            >
+              <Rocket className="w-4 h-4" />
+              Launch
+            </button>
+          </div>
+        )}
+
+        {/* Segment Filter for Leads Tab */}
+        {activeTab === "LEADS" && !showTop10 && (
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+            {(["ALL", "HOT", "WARM", "COLD"] as const).map((seg) => {
+              const c = segmentConfig[seg === "ALL" ? "HOT" : seg];
+              const count = seg === "ALL" ? hotLeads.length + warmLeads.length + coldLeads.length 
+                : seg === "HOT" ? hotLeads.length 
+                : seg === "WARM" ? warmLeads.length 
+                : coldLeads.length;
+              return (
+                <button
+                  key={seg}
+                  onClick={() => setSegmentFilter(seg)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors flex-shrink-0 ${
+                    segmentFilter === seg
+                      ? `${c.bg} border${c.border} text-slate-900`
+                      : "border-slate-200 text-slate-600 hover:border-slate-300"
+                  }`}
+                  role="tab"
+                  aria-selected={segmentFilter === seg}
+                >
+                  {seg === "ALL" ? "All" : c.label}
+                  <span className="text-xs opacity-70">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Insight View Selector for Insights Tab */}
+        {activeTab === "INSIGHTS" && (
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+            {(["TRIBES", "PRICING", "VIRALITY"] as const).map((view) => (
+              <button
+                key={view}
+                onClick={() => setInsightView(view)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors flex-shrink-0 ${
+                  insightView === view
+                    ? "bg-purple-50 border-purple-200 text-slate-900"
+                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                }`}
+                role="tab"
+                aria-selected={insightView === view}
+              >
+                {view === "TRIBES" ? "Tribes" : view === "PRICING" ? "Pricing" : "Virality"}
+              </button>
+            ))}
           </div>
         )}
       </div>
 
-      <div className="space-y-3">
-        {activeTab === "TRIBES" ? (
-          <TribesView
-            allLeads={[...hotLeads, ...warmLeads, ...coldLeads]}
-            onEnrich={(lead) => setEnrichingLead(lead)}
-            onCopyEmail={copyEmail}
-            onGenerateDemoScript={(lead) => setDemoScriptLead(lead)}
-          />
-        ) : activeTab === "PRICING" ? (
-          <PricingIntelligenceDashboard waitlistId={waitlist.id} />
-        ) : activeTab === "LAUNCH" ? (
-          <LaunchTimingView waitlistId={waitlist.id} />
-        ) : activeTab === "VIRALITY" ? (
-          <ViralityAnalyticsDashboard waitlistId={waitlist.id} />
+      <div className="space-y-3" role="tabpanel" id={activeTab === "LEADS" ? "panel-leads" : activeTab === "INSIGHTS" ? "panel-insights" : activeTab === "COMPETITORS" ? "panel-competitors" : "panel-launch"}>
+        {isLoading ? (
+          <>
+            <div className="flex gap-3 mb-2 items-center">
+              <div className="w-4 h-4 rounded border-slate-300 bg-slate-200 animate-pulse" />
+              <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+            </div>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div className="w-4 h-4 rounded border-slate-300 mt-1 bg-slate-200 animate-pulse" />
+                <LeadCardSkeleton />
+              </div>
+            ))}
+          </>
+        ) : activeTab === "INSIGHTS" ? (
+          insightView === "TRIBES" ? (
+            <TribesView
+              allLeads={[...hotLeads, ...warmLeads, ...coldLeads]}
+              onEnrich={(lead) => setEnrichingLead(lead)}
+              onCopyEmail={copyEmail}
+              onGenerateDemoScript={(lead) => setDemoScriptLead(lead)}
+            />
+          ) : insightView === "PRICING" ? (
+            <PricingIntelligenceDashboard waitlistId={waitlist.id} />
+          ) : (
+            <ViralityAnalyticsDashboard waitlistId={waitlist.id} />
+          )
         ) : activeTab === "COMPETITORS" ? (
           <CompetitorView waitlistId={waitlist.id} />
+        ) : activeTab === "LAUNCH" ? (
+          <LaunchTimingView waitlistId={waitlist.id} />
         ) : filteredLeads.length === 0 ? (
           <div className="card text-center py-12 text-slate-500">
             {search ? "No leads match your search" : "No leads found"}
           </div>
         ) : (
-          <div className="flex gap-3 mb-2 items-center">
-            <input
-              type="checkbox"
-              checked={selectedLeads.size === filteredLeads.length && filteredLeads.length > 0}
-              onChange={selectAll}
-              className="w-4 h-4 rounded border-slate-300"
-              aria-label="Select all leads"
-            />
-            <span className="text-sm text-slate-500">
-              {selectedLeads.size > 0 ? `${selectedLeads.size} selected` : `${filteredLeads.length} leads`}
-            </span>
-          </div>
+          <>
+            <div className="flex gap-3 mb-2 items-center">
+              <input
+                type="checkbox"
+                checked={selectedLeads.size === filteredLeads.length && filteredLeads.length > 0}
+                onChange={selectAll}
+                className="w-4 h-4 rounded border-slate-300"
+                aria-label="Select all leads"
+              />
+              <span className="text-sm text-slate-500">
+                {selectedLeads.size > 0 ? `${selectedLeads.size} selected` : `${filteredLeads.length} leads`}
+              </span>
+            </div>
+            {filteredLeads.map((lead) => (
+              <div key={lead.id} className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedLeads.has(lead.id)}
+                  onChange={() => toggleSelectLead(lead.id)}
+                  className="w-4 h-4 rounded border-slate-300 mt-1"
+                  aria-label={`Select ${lead.email}`}
+                />
+                <LeadCard
+                  lead={lead}
+                  onEnrich={() => setEnrichingLead(lead)}
+                  onCopyEmail={() => copyEmail(lead.email)}
+                  onGenerateDemoScript={() => setDemoScriptLead(lead)}
+                />
+              </div>
+            ))}
+          </>
         )}
-        {activeTab !== "TRIBES" && activeTab !== "PRICING" && activeTab !== "LAUNCH" && activeTab !== "VIRALITY" && activeTab !== "COMPETITORS" && filteredLeads.map((lead) => (
-          <div key={lead.id} className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              checked={selectedLeads.has(lead.id)}
-              onChange={() => toggleSelectLead(lead.id)}
-              className="w-4 h-4 rounded border-slate-300 mt-1"
-              aria-label={`Select ${lead.email}`}
-            />
-            <LeadCard
-              lead={lead}
-              onEnrich={() => setEnrichingLead(lead)}
-              onCopyEmail={() => copyEmail(lead.email)}
-              onGenerateDemoScript={() => setDemoScriptLead(lead)}
-            />
-          </div>
-        ))}
       </div>
 
       {enrichingLead && (
@@ -728,7 +804,12 @@ function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead:
           </div>
 
           {expanded && (
-            <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
+            <div
+              id={`lead-details-${lead.id}`}
+              className="mt-3 pt-3 border-t border-slate-100 space-y-2"
+              role="region"
+              aria-label="Lead details"
+            >
               {lead.signupNote && (
                 <p className="text-sm text-slate-600 italic">
                   &ldquo;{lead.signupNote}&rdquo;
@@ -792,7 +873,10 @@ function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead:
 
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-slate-400 hover:text-slate-600"
+            className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
+            aria-expanded={expanded}
+            aria-controls={`lead-details-${lead.id}`}
+            aria-label={expanded ? "Collapse lead details" : "Expand lead details"}
           >
             <ChevronRight
               className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`}

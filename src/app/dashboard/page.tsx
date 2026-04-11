@@ -10,6 +10,7 @@ import {
   ArrowUpRight,
   Plus,
 } from "lucide-react";
+import { EmptyWaitlist } from "@/components/ui/empty-state";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -120,7 +121,7 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="card">
             <div className="flex items-center justify-between mb-2">
@@ -158,15 +159,9 @@ export default async function DashboardPage() {
 
       {waitlists.length === 0 ? (
         <div className="max-w-2xl mx-auto">
-          <div className="card text-center py-12 mb-8">
-            <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-600 mb-4">No waitlists yet</p>
-            <Link href="/upload" className="btn-primary">
-              Upload your first waitlist
-            </Link>
-          </div>
-
-          <div className="card border-2 border-dashed border-slate-200">
+          <EmptyWaitlist />
+          
+          <div className="card border-2 border-dashed border-slate-200 mt-8">
             <h3 className="text-lg font-bold text-slate-900 mb-6">
               Get started in 3 steps
             </h3>

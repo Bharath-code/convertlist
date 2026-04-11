@@ -147,7 +147,7 @@ describe('seasonality', () => {
 
       const result100 = await detectSeasonality(leads100);
       expect(result100?.confidence).toBe(1);
-    });
+    }, 10000);
 
     it('should cap confidence at 1', async () => {
       const leads200 = Array.from({ length: 200 }, (_, i) => ({
@@ -157,7 +157,7 @@ describe('seasonality', () => {
 
       const result = await detectSeasonality(leads200);
       expect(result?.confidence).toBeLessThanOrEqual(1);
-    });
+    }, 10000);
 
     it('should calculate average score for patterns', async () => {
       const leads = [

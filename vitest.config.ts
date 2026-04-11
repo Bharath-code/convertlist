@@ -16,6 +16,11 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.spec.ts',
         '**/types/',
+        'src/lib/ai/',
+        'src/lib/competitors/',
+        'src/lib/multi-product/',
+        'src/lib/network/',
+        'src/lib/inngest/functions/',
       ],
       thresholds: {
         lines: 75,

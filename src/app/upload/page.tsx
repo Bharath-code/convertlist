@@ -12,7 +12,8 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [pasteData, setPasteData] = useState("");
   const [waitlistName, setWaitlistName] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [leadCount, setLeadCount] = useState<number | null>(null);
@@ -87,8 +88,20 @@ export default function UploadPage() {
   const handleSubmit = async () => {
     if (!waitlistName.trim()) return;
 
-    setIsUploading(true);
+    setUploading(true);
+    setUploadProgress(0);
     setErrorMsg(null);
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 200);
 
     try {
       const formData = new FormData();
@@ -107,6 +120,9 @@ export default function UploadPage() {
         body: formData,
       });
 
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -115,15 +131,16 @@ export default function UploadPage() {
         } else {
           setErrorMsg(data.error || "Upload failed");
         }
-        setIsUploading(false);
+        setUploading(false);
         return;
       }
 
       toast.success("Upload started! Scoring your leads...");
       router.push(`/processing/${data.waitlistId}`);
     } catch (error) {
+      clearInterval(progressInterval);
       setErrorMsg("Upload failed. Please try again.");
-      setIsUploading(false);
+      setUploading(false);
     }
   };
 
@@ -214,8 +231,15 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
           value={waitlistName}
           onChange={(e) => setWaitlistName(e.target.value)}
           placeholder="My SaaS Waitlist"
-          className="input"
+          className={`input ${waitlistName.trim() ? "border-green-300 focus:ring-green-500" : "border-slate-200"}`}
+          aria-invalid={!waitlistName.trim()}
+          aria-describedby="waitlist-name-error"
         />
+        {!waitlistName.trim() && (
+          <p id="waitlist-name-error" className="text-xs text-red-600 mt-1">
+            Waitlist name is required
+          </p>
+        )}
       </div>
 
       <div className="flex gap-4 mb-6">
@@ -376,7 +400,7 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
       )}
 
       <div className="flex gap-3 mt-6">
-        {file && !isUploading && (
+        {file && !uploading && (
           <button
             type="button"
             onClick={handleCancel}
@@ -387,20 +411,16 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
           </button>
         )}
         <button
+          type="button"
           onClick={handleSubmit}
-          disabled={
-            !waitlistName.trim() ||
-            isUploading ||
-            (mode === "csv" && !file) ||
-            (mode === "paste" && !pasteData.trim()) ||
-            wouldExceed
-          }
-          className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={uploading}
+          className="btn-primary flex items-center justify-center gap-2"
         >
-          {isUploading ? (
-            "Processing..."
-          ) : wouldExceed ? (
-            "Would exceed 25 lead limit"
+          {uploading ? (
+            <>
+              Uploading...
+              <ArrowRight className="w-4 h-4 animate-spin" />
+            </>
           ) : (
             <>
               Start Analysis
@@ -409,6 +429,20 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
           )}
         </button>
       </div>
+
+      {uploading && (
+        <div className="mt-4">
+          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-slate-900 transition-all duration-300"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+          <p className="text-sm text-slate-600 mt-2 text-center">
+            Uploading... {uploadProgress}%
+          </p>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="mt-12 pt-6 border-t border-slate-200">
