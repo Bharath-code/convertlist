@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { generateDemoScript } from "@/lib/ai/demo-script";
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +9,7 @@ export async function POST(
 ) {
   try {
     const { id: leadId } = await params;
+    const { db } = await import("@/lib/db");
 
     // Fetch lead data
     const lead = await db.lead.findUnique({

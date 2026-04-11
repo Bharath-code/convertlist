@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/webhooks/verify-signature";
 
 export const dynamic = 'force-dynamic';
@@ -75,6 +74,8 @@ export async function POST(req: Request) {
     }
 
     const leadId = leadIdMatch[1];
+
+    const { db } = await import("@/lib/db");
 
     // Find the lead by ID
     const lead = await db.lead.findUnique({

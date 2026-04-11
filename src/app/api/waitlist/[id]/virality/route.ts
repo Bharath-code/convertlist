@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +14,8 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    const { db } = await import("@/lib/db");
 
     const leads = await db.lead.findMany({
       where: { waitlistId: id },

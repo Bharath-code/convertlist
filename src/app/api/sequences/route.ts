@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +9,8 @@ export async function POST(req: Request) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const { db } = await import("@/lib/db");
 
     const user = await db.user.findUnique({ where: { clerkId: userId } });
     if (!user) {
@@ -63,6 +64,8 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const waitlistId = searchParams.get("waitlistId");
+
+    const { db } = await import("@/lib/db");
 
     const user = await db.user.findUnique({ where: { clerkId: userId } });
     if (!user) {

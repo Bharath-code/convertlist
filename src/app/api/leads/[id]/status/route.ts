@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
 import { trackConversion } from "@/lib/scoring/conversion-analytics";
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +27,8 @@ export async function PATCH(
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
+
+    const { db } = await import("@/lib/db");
 
     const lead = await db.lead.findUnique({
       where: { id },

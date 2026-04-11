@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +15,8 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
+
+    const { db } = await import("@/lib/db");
 
     const sequence = await db.sequence.findUnique({
       where: { id },
@@ -64,6 +65,8 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    const { db } = await import("@/lib/db");
 
     const sequence = await db.sequence.findUnique({
       where: { id },

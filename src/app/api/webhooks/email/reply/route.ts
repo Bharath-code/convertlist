@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +8,8 @@ export async function POST(req: Request) {
     const { lead_id, event, timestamp, email, from } = body;
 
     let leadId = lead_id;
+
+    const { db } = await import("@/lib/db");
 
     if (!leadId && email) {
       const lead = await db.lead.findFirst({

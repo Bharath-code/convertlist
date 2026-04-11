@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/webhooks/verify-signature";
 
 export const dynamic = 'force-dynamic';
@@ -35,6 +34,8 @@ export async function POST(req: Request) {
         plan !== "LAUNCH" && plan !== "FREE"
           ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
           : null;
+
+      const { db } = await import("@/lib/db");
 
       await db.user.update({
         where: { email: customer_email },

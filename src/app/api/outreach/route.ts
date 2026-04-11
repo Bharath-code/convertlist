@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { db } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
@@ -19,6 +15,8 @@ export async function POST(req: Request) {
     if (!leadId) {
       return NextResponse.json({ error: "leadId required" }, { status: 400 });
     }
+
+    const { db } = await import("@/lib/db");
 
     const lead = await db.lead.findUnique({
       where: { id: leadId },
@@ -48,6 +46,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No steps in sequence" }, { status: 400 });
     }
 
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `You are an expert cold email copywriter. Generate a personalized outreach email.

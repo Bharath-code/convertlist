@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
 import { enrichLead, isClearbitConfigured } from "@/lib/enrichment/clearbit";
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +23,8 @@ export async function POST(req: Request) {
     if (!leadId || !answers) {
       return NextResponse.json({ error: "leadId and answers required" }, { status: 400 });
     }
+
+    const { db } = await import("@/lib/db");
 
     const lead = await db.lead.findUnique({
       where: { id: leadId },
