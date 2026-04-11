@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
 import {
   launchOutreachCampaign,
   isInstantlyConfigured,
@@ -30,6 +29,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const { db } = await import("@/lib/db");
 
     // Verify user owns the waitlist
     const waitlist = await db.waitlist.findUnique({
