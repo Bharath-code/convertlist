@@ -1,5 +1,3 @@
-import { db } from "@/lib/db";
-
 /**
  * Conversion Analytics System
  *
@@ -84,6 +82,7 @@ function extractSignals(lead: { email?: string | null; signupNote?: string | nul
  * Track when a lead is scored
  */
 export async function trackLeadScored(leadId: string) {
+  const { db } = await import("@/lib/db");
   const lead = await db.lead.findUnique({
     where: { id: leadId },
   });
@@ -103,6 +102,7 @@ export async function trackLeadScored(leadId: string) {
  * Track conversion when a lead is marked as PAID
  */
 export async function trackConversion(leadId: string) {
+  const { db } = await import("@/lib/db");
   const lead = await db.lead.findUnique({
     where: { id: leadId },
   });
