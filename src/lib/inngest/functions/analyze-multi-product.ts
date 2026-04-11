@@ -72,8 +72,11 @@ export const analyzeMultiProduct = inngest.createFunction(
     const earlyAdopterProfile = await step.run("calculate-early-adopter-profile", async () => {
       const signupDelays = user.waitlists.map(waitlist => {
         const firstLead = waitlist.leads[0];
-        if (!firstLead) return 0;
-        return Math.floor((new Date(firstLead.createdAt).getTime() - waitlist.createdAt.getTime()) / (1000 * 60 * 60));
+        if (!firstLead || !firstLead.createdAt) return 0;
+        const waitlistCreatedAt = typeof waitlist.createdAt === 'string'
+          ? new Date(waitlist.createdAt)
+          : waitlist.createdAt;
+        return Math.floor((new Date(firstLead.createdAt).getTime() - waitlistCreatedAt.getTime()) / (1000 * 60 * 60));
       });
 
       return calculateEarlyAdopterScore(signupDelays, user.waitlists.length);
@@ -82,7 +85,7 @@ export const analyzeMultiProduct = inngest.createFunction(
     // Predict lifetime value
     const lifetimeValuePrediction = await step.run("predict-lifetime-value", async () => {
       return await predictLifetimeValue(
-        crossProductBehavior,
+        crossProductBehavior as any,
         earlyAdopterProfile,
         100 // Average revenue per product
       );
@@ -91,7 +94,7 @@ export const analyzeMultiProduct = inngest.createFunction(
     // Calculate super-user score
     const superUserScore = await step.run("calculate-super-user-score", async () => {
       const score = calculateSuperUserScore(
-        crossProductBehavior,
+        crossProductBehavior as any,
         earlyAdopterProfile,
         lifetimeValuePrediction
       );

@@ -37,7 +37,7 @@ export const analyzeCompetitors = inngest.createFunction(
       return await batchFingerprintLeads(
         leads.map(lead => ({
           email: lead.email,
-          techStack: lead.techStack ? JSON.parse(lead.techStack) : undefined,
+          techStack: (lead as any).techStack ? JSON.parse((lead as any).techStack) : undefined,
         }))
       );
     });
@@ -52,7 +52,7 @@ export const analyzeCompetitors = inngest.createFunction(
 
     // Step 3: Calculate switching costs for leads with detected competitors
     const switchingCostAnalyses = await step.run("calculate-switching-costs", async () => {
-      const leadsWithCompetitors = leads.filter((_, index) => 
+      const leadsWithCompetitors = leads.filter((_, index) =>
         fingerprintResults[index].competitorIds.length > 0
       );
 
@@ -60,7 +60,7 @@ export const analyzeCompetitors = inngest.createFunction(
         leadsWithCompetitors.map((lead, i) => ({
           competitorId: fingerprintResults[leads.indexOf(lead)].competitorIds[0],
           signupNote: lead.signupNote || undefined,
-          companySize: lead.companySize || undefined,
+          companySize: (lead as any).companySize || undefined,
         }))
       );
     });

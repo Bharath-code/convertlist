@@ -67,9 +67,9 @@ export const mapNetwork = inngest.createFunction(
         const influenceScore = calculateInfluenceScore(
           companyAnalysis,
           communityOverlap,
-          lead.socialProofScore || undefined,
-          lead.twitterFollowers || undefined,
-          lead.githubActivity || undefined
+          (lead as any).socialProofScore || undefined,
+          (lead as any).twitterFollowers || undefined,
+          (lead as any).githubActivity || undefined
         );
 
         scoresMap[lead.id] = influenceScore.score;
@@ -78,7 +78,7 @@ export const mapNetwork = inngest.createFunction(
           where: { id: lead.id },
           data: {
             relatedLeads: companyAnalysis.relationshipCount > 0
-              ? JSON.stringify(companyAnalysis.relationships.map(r => r.relatedCompany))
+              ? JSON.stringify(companyAnalysis.relationships.map((r: any) => r.relatedCompany))
               : null,
             companyRelationships: companyAnalysis.relationshipCount > 0
               ? JSON.stringify(companyAnalysis.relationships)
