@@ -1,7 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { db } from "@/lib/db";
 import {
   Users,
   TrendingUp,
@@ -19,6 +18,8 @@ export default async function DashboardPage() {
   if (!userId) {
     redirect("/sign-in");
   }
+
+  const { db } = await import("@/lib/db");
 
   const user = await db.user.findUnique({
     where: { clerkId: userId },

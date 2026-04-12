@@ -1,6 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import ResultsClient from "./results-client";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
@@ -13,6 +12,8 @@ export default async function ResultsPage({
   if (!userId) return null;
 
   const { id } = await params;
+
+  const { db } = await import("@/lib/db");
 
   const waitlist = await db.waitlist.findUnique({
     where: { id, userId: userId || undefined },

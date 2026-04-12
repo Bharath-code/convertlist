@@ -5,8 +5,6 @@
  * and assign lookalike groups. Requires historical conversion data.
  */
 
-import { db } from "@/lib/db";
-
 export interface LookalikeResult {
   lookalikeGroupId: string | null;
   confidence: number;
@@ -22,6 +20,8 @@ export async function findLookalikeGroup(
   signupNote: string | null
 ): Promise<LookalikeResult> {
   try {
+    const { db } = await import("@/lib/db");
+
     // Get converted customers (leads with status PAID)
     const convertedCustomers = await db.lead.findMany({
       where: {
