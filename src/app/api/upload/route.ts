@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
-import { inngest } from "@/lib/inngest/client";
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +26,9 @@ export async function POST(req: Request) {
     if (!name?.trim()) {
       return NextResponse.json({ error: "Waitlist name required" }, { status: 400 });
     }
+
+    const { db } = await import("@/lib/db");
+    const { inngest } = await import("@/lib/inngest/client");
 
     let user = await db.user.findUnique({ where: { clerkId: userId } });
     if (!user) {
