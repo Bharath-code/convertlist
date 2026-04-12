@@ -15,18 +15,19 @@ export default async function ResultsPage({
 
   const { db } = await import("@/lib/db");
 
-  const waitlist = await db.waitlist.findUnique({
-    where: { id, userId: userId || undefined },
-    include: {
-      leads: {
-        orderBy: [{ segment: "asc" }, { score: "desc" }],
+  const [waitlist, user] = await Promise.all([
+    db.waitlist.findUnique({
+      where: { id, userId: userId || undefined },
+      include: {
+        leads: {
+          orderBy: [{ segment: "asc" }, { score: "desc" }],
+        },
       },
-    },
-  });
+    }),
+    db.user.findUnique({ where: { clerkId: userId } }),
+  ]);
 
   if (!waitlist) redirect("/dashboard");
-
-  const user = await db.user.findUnique({ where: { clerkId: userId } });
 
   const hotLeads = waitlist.leads.filter((l) => l.segment === "HOT");
   const warmLeads = waitlist.leads.filter((l) => l.segment === "WARM");

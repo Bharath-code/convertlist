@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/patterns";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/patterns";
 
+const STAR_RATINGS = [1, 2, 3, 4, 5];
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -71,7 +73,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center justify-center gap-2 mb-8">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {STAR_RATINGS.map((i) => (
               <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
             ))}
             <span className="text-sm text-slate-600 ml-3">Trusted by 500+ founders on IH, PH, and niche communities</span>
@@ -482,10 +484,12 @@ function Testimonial({
   quote: string;
   rating: number;
 }) {
+  const stars = Array.from({ length: rating }, (_, i) => i);
+  
   return (
     <Card variant="default" className="p-6">
       <div className="flex items-center gap-1 mb-4">
-        {[...Array(rating)].map((_, i) => (
+        {stars.map((i) => (
           <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
         ))}
       </div>

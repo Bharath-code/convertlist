@@ -27,8 +27,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Waitlist name required" }, { status: 400 });
     }
 
-    const { db } = await import("@/lib/db");
-    const { inngest } = await import("@/lib/inngest/client");
+    const [db, inngest] = await Promise.all([
+      import("@/lib/db").then(m => m.db),
+      import("@/lib/inngest/client").then(m => m.inngest),
+    ]);
 
     let user = await db.user.findUnique({ where: { clerkId: userId } });
     if (!user) {
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     const limit = PLAN_LEAD_LIMITS[user.plan] ?? 25;
-    const currentUsed = await db.lead.count({ where: { waitlist: { userId } } });
+    const currentUsedPromise = db.lead.count({ where: { waitlist: { userId } } });
 
     if (mode === "csv") {
       const file = formData.get("file") as File | null;
@@ -63,6 +65,8 @@ export async function POST(req: Request) {
       if (leads.length === 0) {
         return NextResponse.json({ error: "No valid leads found" }, { status: 400 });
       }
+
+      const currentUsed = await currentUsedPromise;
 
       if (limit !== Infinity && currentUsed + leads.length > limit) {
         return NextResponse.json(
@@ -125,6 +129,8 @@ export async function POST(req: Request) {
       if (emails.length === 0) {
         return NextResponse.json({ error: "No valid emails found" }, { status: 400 });
       }
+
+      const currentUsed = await currentUsedPromise;
 
       if (limit !== Infinity && currentUsed + emails.length > limit) {
         return NextResponse.json(

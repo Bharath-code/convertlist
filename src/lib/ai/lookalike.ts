@@ -93,14 +93,14 @@ export async function findLookalikeGroup(
 export async function findLookalikeGroupsBatch(
   leads: Array<{ id: string; email: string; company: string | null; signupNote: string | null }>
 ): Promise<Map<string, LookalikeResult>> {
-  const results = new Map<string, LookalikeResult>();
+  const lookalikePromises = leads.map((lead) =>
+    findLookalikeGroup(lead.id, lead.email, lead.company, lead.signupNote)
+      .then(result => ({ leadId: lead.id, result }))
+  );
 
-  for (const lead of leads) {
-    const lookalike = await findLookalikeGroup(lead.id, lead.email, lead.company, lead.signupNote);
-    results.set(lead.id, lookalike);
-  }
-
-  return results;
+  const results = await Promise.all(lookalikePromises);
+  
+  return new Map(results.map(({ leadId, result }) => [leadId, result]));
 }
 
 /**

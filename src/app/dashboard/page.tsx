@@ -44,33 +44,27 @@ export default async function DashboardPage() {
 
   const waitlists = user.waitlists;
 
-  const totalLeads = waitlists.reduce((sum, w) => sum + w.totalLeads, 0);
-  const totalHot = waitlists.reduce(
-    (sum, w) => sum + w.leads.filter((l) => l.segment === "HOT").length,
-    0
-  );
-  const totalWarm = waitlists.reduce(
-    (sum, w) => sum + w.leads.filter((l) => l.segment === "WARM").length,
-    0
-  );
-  const totalCold = waitlists.reduce(
-    (sum, w) => sum + w.leads.filter((l) => l.segment === "COLD").length,
-    0
-  );
+  let totalLeads = 0;
+  let totalHot = 0;
+  let totalWarm = 0;
+  let totalCold = 0;
+  let contacted = 0;
+  let replied = 0;
+  let paid = 0;
 
-  const contacted = waitlists.reduce(
-    (sum, w) =>
-      sum + w.leads.filter((l) => l.status !== "UNCONTACTED").length,
-    0
-  );
-  const replied = waitlists.reduce(
-    (sum, w) => sum + w.leads.filter((l) => l.status === "REPLIED" || l.status === "INTERESTED" || l.status === "PAID").length,
-    0
-  );
-  const paid = waitlists.reduce(
-    (sum, w) => sum + w.leads.filter((l) => l.status === "PAID").length,
-    0
-  );
+  for (const w of waitlists) {
+    totalLeads += w.totalLeads;
+    
+    for (const l of w.leads) {
+      if (l.segment === "HOT") totalHot++;
+      else if (l.segment === "WARM") totalWarm++;
+      else if (l.segment === "COLD") totalCold++;
+      
+      if (l.status !== "UNCONTACTED") contacted++;
+      if (l.status === "REPLIED" || l.status === "INTERESTED" || l.status === "PAID") replied++;
+      if (l.status === "PAID") paid++;
+    }
+  }
 
   const stats = [
     {
