@@ -28,15 +28,33 @@ export default function LandingPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 400) {
-        setShowStickyCTA(true);
-      } else {
-        setShowStickyCTA(false);
-      }
+      setShowStickyCTA(window.scrollY > 400);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Populate UTM parameters from URL into hidden form fields
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmSource = urlParams.get('utm_source');
+    const utmMedium = urlParams.get('utm_medium');
+    const utmCampaign = urlParams.get('utm_campaign');
+    const utmContent = urlParams.get('utm_content');
+    const utmTerm = urlParams.get('utm_term');
+
+    const utmSourceInput = document.querySelector('input[name="utmSource"]') as HTMLInputElement;
+    const utmMediumInput = document.querySelector('input[name="utmMedium"]') as HTMLInputElement;
+    const utmCampaignInput = document.querySelector('input[name="utmCampaign"]') as HTMLInputElement;
+    const utmContentInput = document.querySelector('input[name="utmContent"]') as HTMLInputElement;
+    const utmTermInput = document.querySelector('input[name="utmTerm"]') as HTMLInputElement;
+
+    if (utmSourceInput && utmSource) utmSourceInput.value = utmSource;
+    if (utmMediumInput && utmMedium) utmMediumInput.value = utmMedium;
+    if (utmCampaignInput && utmCampaign) utmCampaignInput.value = utmCampaign;
+    if (utmContentInput && utmContent) utmContentInput.value = utmContent;
+    if (utmTermInput && utmTerm) utmTermInput.value = utmTerm;
   }, []);
 
   return (
@@ -168,25 +186,37 @@ export default function LandingPage() {
       {/* Email Capture Form with Lead Magnet */}
       <div className="max-w-2xl mx-auto mt-12 animate-fade-in-up animation-delay-700">
         <div className="bg-[#1C1917] text-[#FAFAF9] p-8 rounded-lg">
-          <h3 className="text-2xl font-display font-semibold mb-2">Get the Waitlist Conversion Framework</h3>
+          <h3 className="text-2xl font-display font-semibold mb-2">Score Your Waitlist in 5 Minutes</h3>
           <p className="text-[#A8A29E] mb-6">
-            Free guide with the exact strategy founders use to convert waitlists into paying customers.
+            Free checklist to identify which leads are 3x more likely to convert. Focus on Hot leads first to hit 20%+ reply rates.
           </p>
-          <form className="flex flex-col sm:flex-row gap-3">
+          <form 
+            action="/api/lead-magnet/capture" 
+            method="POST"
+            className="flex flex-col sm:flex-row gap-3"
+          >
             <input
               type="email"
+              name="email"
               placeholder="your@email.com"
+              required
               className="flex-1 px-4 py-3 rounded-lg bg-[#292524] text-[#FAFAF9] placeholder-[#78716C] border border-[#44403C] focus:outline-none focus:border-[#C2410C]"
             />
+            <input type="hidden" name="magnetType" value="CHECKLIST" />
+            <input type="hidden" name="utmSource" />
+            <input type="hidden" name="utmMedium" />
+            <input type="hidden" name="utmCampaign" />
+            <input type="hidden" name="utmContent" />
+            <input type="hidden" name="utmTerm" />
             <button
               type="submit"
               className="bg-[#C2410C] text-[#FAFAF9] px-6 py-3 rounded-lg font-semibold hover:bg-[#EA580C] transition-colors cursor-pointer"
             >
-              Get the guide
+              Get the checklist
             </button>
           </form>
           <p className="text-xs text-[#78716C] mt-4">
-            No spam. Unsubscribe anytime.
+            Instant download. No spam. Unsubscribe anytime.
           </p>
         </div>
       </div>

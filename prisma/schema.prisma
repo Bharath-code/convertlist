@@ -173,6 +173,32 @@ model ConversionAnalytics {
   @@index([signalType])
 }
 
+model LeadMagnetCapture {
+  id          String   @id @default(cuid())
+  email       String
+  magnetType  MagnetType
+  name        String?
+  deliveredAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  
+  // UTM tracking fields
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+
+  @@index([email])
+  @@index([magnetType])
+  @@index([utmSource])
+}
+
+enum MagnetType {
+  CHECKLIST
+  EMAIL_TEMPLATES
+  PLAYBOOK
+}
+
 enum Plan {
   FREE
   PRO
