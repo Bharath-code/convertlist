@@ -1,21 +1,26 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Upload, FileText, ArrowRight, ArrowUpRight, AlertCircle, Download, X } from "lucide-react";
+import { Upload, FileText, ArrowRight, ArrowUpRight, AlertCircle, Download, X, Play } from "lucide-react";
 import { Button } from "@/components/patterns";
-import { Card, CardContent } from "@/components/patterns";
+import { Card } from "@/components/patterns";
+import { Input } from "@/components/patterns";
+import { cn } from "@/lib/utils";
+import { SlideUp, FadeIn } from "@/components/motion";
+
+type Step = "name" | "source" | "preview";
 
 export default function UploadPage() {
   const router = useRouter();
+  const [step, setStep] = useState<Step>("name");
   const [mode, setMode] = useState<"csv" | "paste">("csv");
   const [file, setFile] = useState<File | null>(null);
   const [pasteData, setPasteData] = useState("");
   const [waitlistName, setWaitlistName] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [leadCount, setLeadCount] = useState<number | null>(null);
@@ -62,7 +67,6 @@ export default function UploadPage() {
         const lines = text.split("\n").filter((l) => l.trim());
         setLeadCount(Math.max(0, lines.length - 1));
         
-        // Generate preview data
         const preview = lines.slice(1, 6).map((line) => {
           const parts = line.split(",");
           return {
@@ -91,19 +95,7 @@ export default function UploadPage() {
     if (!waitlistName.trim()) return;
 
     setUploading(true);
-    setUploadProgress(0);
     setErrorMsg(null);
-
-    // Simulate progress
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        return prev + 10;
-      });
-    }, 200);
 
     try {
       const formData = new FormData();
@@ -122,9 +114,6 @@ export default function UploadPage() {
         body: formData,
       });
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
       const data = await res.json();
 
       if (!res.ok) {
@@ -140,17 +129,9 @@ export default function UploadPage() {
       toast.success("Upload started! Scoring your leads...");
       router.push(`/processing/${data.waitlistId}`);
     } catch (error) {
-      clearInterval(progressInterval);
       setErrorMsg("Upload failed. Please try again.");
       setUploading(false);
     }
-  };
-
-  const handleCancel = () => {
-    setFile(null);
-    setPasteData("");
-    setPreviewData([]);
-    setLeadCount(null);
   };
 
   const downloadSampleCSV = () => {
@@ -170,289 +151,277 @@ mike@techstartup.co,Mike Johnson,TechStartup Co,"We have 1000+ signups but only 
   };
 
   const isFree = usedLeads > 0;
-  const wouldExceed =
-    isFree &&
-    leadCount !== null &&
-    usedLeads + leadCount > 50;
-
+  const wouldExceed = isFree && leadCount !== null && usedLeads + leadCount > 50;
   const estimatedTotal = leadCount !== null ? usedLeads + leadCount : null;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {isFree && (
-        <Card variant="default" className="mb-6 border border-amber-200 bg-amber-50 flex items-center justify-between gap-4">
-          <CardContent className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-amber-900">
-                Free plan: {usedLeads}/50 leads used
-              </p>
-              {estimatedTotal !== null && (
-                <p className="text-xs text-amber-700">
-                  This upload: {leadCount} leads
-                  {wouldExceed
-                    ? ` → would exceed 50 limit (${estimatedTotal})`
-                    : ` → total would be ${estimatedTotal}/50`}
-                </p>
-              )}
+    <div className="max-w-3xl mx-auto py-12">
+      {/* Progress Steps */}
+      <div className="flex items-center justify-center mb-12">
+        {[1, 2, 3].map((i) => (
+          <React.Fragment key={i}>
+            <div className={cn(
+              "w-10 h-10 rounded-full flex items-center justify-center font-medium transition-all duration-300",
+              (step === "name" && i === 1) || (step === "source" && i === 2) || (step === "preview" && i === 3)
+                ? "bg-indigo-500 text-white scale-110" 
+                : "bg-indigo-100 text-indigo-600"
+            )}>
+              {i}
             </div>
-          </CardContent>
-          <Link
-            href="/pricing"
-            className="text-sm font-medium text-amber-900 hover:text-amber-700 flex items-center gap-1 flex-shrink-0"
-          >
-            Upgrade <ArrowUpRight className="w-4 h-4" />
+            {i < 3 && (
+              <div className={cn(
+                "w-24 h-1 mx-2 rounded-full transition-all duration-300",
+                (step === "source" && i === 1) || (step === "preview" && i >= 1)
+                  ? "bg-indigo-500" 
+                  : "bg-indigo-100"
+              )} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {isFree && (
+        <Card className="max-w-xl mx-auto mb-6 border-2 border-amber-300 bg-amber-50 flex items-center justify-between">
+          <div>
+            <p className="font-medium text-amber-900">
+              You're at {usedLeads}/50 leads on the free plan
+            </p>
+            <p className="text-sm text-amber-700">
+              Upgrade to Starter for 500 leads/mo or Pro for 5,000 leads/mo
+            </p>
+          </div>
+          <Link href="/pricing">
+            <Button variant="primary" size="sm">
+              Upgrade <ArrowUpRight className="w-4 h-4" />
+            </Button>
           </Link>
         </Card>
       )}
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Import Your Waitlist</h1>
-        <p className="mt-2 text-slate-600">
-          Upload a CSV file or paste your email list to get started
-        </p>
-      </div>
-
       {errorMsg && (
-        <Card variant="default" className="mb-6 border border-red-200 bg-red-50">
-          <CardContent>
-            <p className="text-sm text-red-700">{errorMsg}</p>
-            {errorMsg.includes("limit") && (
-              <Link href="/pricing" className="text-sm font-medium text-red-900 hover:text-red-700 mt-1 inline-block">
-                Upgrade to continue &rarr;
-              </Link>
-            )}
-          </CardContent>
+        <Card className="max-w-xl mx-auto mb-6 border-2 border-red-300 bg-red-50">
+          <p className="text-sm text-red-700">{errorMsg}</p>
+          {errorMsg.includes("limit") && (
+            <Link href="/pricing" className="text-sm font-medium text-red-900 hover:text-red-700 mt-2 inline-block">
+              Upgrade to continue →
+            </Link>
+          )}
         </Card>
       )}
 
-      <Card variant="default" className="mb-6">
-        <CardContent>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Waitlist Name
-          </label>
-          <input
-            type="text"
-            value={waitlistName}
-            onChange={(e) => setWaitlistName(e.target.value)}
-            placeholder="My SaaS Waitlist"
-            className={`input ${waitlistName.trim() ? "border-green-300 focus:ring-green-500" : "border-slate-200"}`}
-            aria-invalid={!waitlistName.trim()}
-            aria-describedby="waitlist-name-error"
-          />
-          {!waitlistName.trim() && (
-            <p id="waitlist-name-error" className="text-xs text-red-600 mt-1">
-              Waitlist name is required
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={() => setMode("csv")}
-          className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-            mode === "csv"
-              ? "border-slate-900 bg-slate-50 text-slate-900"
-              : "border-slate-200 text-slate-600 hover:border-slate-300"
-          }`}
-        >
-          <Upload className="w-5 h-5 mx-auto mb-2" />
-          <span className="font-medium">CSV Upload</span>
-        </button>
-        <button
-          onClick={() => setMode("paste")}
-          className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-            mode === "paste"
-              ? "border-slate-900 bg-slate-50 text-slate-900"
-              : "border-slate-200 text-slate-600 hover:border-slate-300"
-          }`}
-        >
-          <FileText className="w-5 h-5 mx-auto mb-2" />
-          <span className="font-medium">Paste List</span>
-        </button>
-      </div>
-
-      {mode === "csv" ? (
-        <Card variant="default">
-          <div className="flex items-center justify-between mb-4">
-            <label htmlFor="csv-upload" className="text-sm font-medium text-slate-700">
-              Upload CSV File
-            </label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={downloadSampleCSV}
-                className="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-1"
-              >
-                <Download className="w-4 h-4" />
-                Sample CSV
-              </button>
-            </div>
-          </div>
-          
-          <div
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
-              dragActive
-                ? "border-slate-900 bg-slate-50 scale-[1.02]"
-                : "border-slate-300 hover:border-slate-400"
-            }`}
-          >
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileChange}
-              className="hidden"
-              id="csv-upload"
+      {/* Step 1: Waitlist Name */}
+      {step === "name" && (
+        <SlideUp key="step-name">
+          <Card className="max-w-xl mx-auto">
+            <h2 className="text-2xl font-bold text-indigo-900 mb-2">Name your waitlist</h2>
+            <p className="text-indigo-600 mb-6">Give it a memorable name for easy reference</p>
+            
+            <Input
+              label="Waitlist Name"
+              placeholder="e.g., Product Hunt Launch March 2026"
+              value={waitlistName}
+              onChange={(e) => setWaitlistName(e.target.value)}
+              helperText="This helps you organize multiple waitlists"
             />
-            <label htmlFor="csv-upload" className="cursor-pointer">
-              {file ? (
-                <div>
-                  <FileText className="w-10 h-10 mx-auto text-slate-600 mb-3" />
-                  <p className="font-medium text-slate-900">{file.name}</p>
-                  <p className="text-sm text-slate-500 mt-1">
-                    {(file.size / 1024).toFixed(1)} KB
-                    {leadCount !== null && (
-                      <span className="ml-2">({leadCount} leads)</span>
+            
+            <Button 
+              variant="cta" 
+              className="w-full mt-6"
+              onClick={() => setStep("source")}
+              disabled={!waitlistName.trim()}
+            >
+              Continue
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Card>
+        </SlideUp>
+      )}
+
+      {/* Step 2: Source Selection */}
+      {step === "source" && (
+        <SlideUp key="step-source">
+          <Card className="max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-indigo-900 mb-2">Import your leads</h2>
+            <p className="text-indigo-600 mb-6">Choose how you want to upload your waitlist</p>
+            
+            <div className="grid grid-cols-2 gap-4 mb-6">
+            <button
+              onClick={() => setMode("csv")}
+              className={cn(
+                "p-6 rounded-xl border-2 transition-all duration-300 text-left",
+                mode === "csv" 
+                  ? "border-indigo-500 bg-indigo-50" 
+                  : "border-indigo-200 hover:border-indigo-300"
+              )}
+            >
+              <Upload className="w-8 h-8 text-indigo-500 mb-3" />
+              <h3 className="font-semibold text-indigo-900 mb-1">Upload CSV</h3>
+              <p className="text-sm text-indigo-600">Drag & drop or browse</p>
+            </button>
+            
+            <button
+              onClick={() => setMode("paste")}
+              className={cn(
+                "p-6 rounded-xl border-2 transition-all duration-300 text-left",
+                mode === "paste" 
+                  ? "border-indigo-500 bg-indigo-50" 
+                  : "border-indigo-200 hover:border-indigo-300"
+              )}
+            >
+              <FileText className="w-8 h-8 text-indigo-500 mb-3" />
+              <h3 className="font-semibold text-indigo-900 mb-1">Paste List</h3>
+              <p className="text-sm text-indigo-600">Copy & paste emails</p>
+            </button>
+          </div>
+
+          {mode === "csv" && (
+            <div
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              className={cn(
+                "border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300",
+                dragActive 
+                  ? "border-indigo-500 bg-indigo-50 scale-[1.02]" 
+                  : "border-indigo-300 hover:border-indigo-400"
+              )}
+            >
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="hidden"
+                id="csv-upload"
+              />
+              <label htmlFor="csv-upload" className="cursor-pointer">
+                {file ? (
+                  <div className="animate-fade-in">
+                    <FileText className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
+                    <p className="font-semibold text-indigo-900">{file.name}</p>
+                    <p className="text-indigo-600">{(file.size / 1024).toFixed(1)} KB</p>
+                    {leadCount && (
+                      <p className="text-emerald-600 font-medium mt-2">
+                        {leadCount} leads detected
+                      </p>
                     )}
-                  </p>
-                  <p className="text-xs text-amber-600 mt-2">
-                    Max file size: 2MB
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <Upload className="w-10 h-10 mx-auto text-slate-400 mb-3" />
-                  <p className="text-slate-600">
-                    Drag & drop your CSV file here, or{" "}
-                    <span className="text-slate-900 font-medium">browse</span>
-                  </p>
-                  <p className="text-xs text-slate-500 mt-2">
-                    Max file size: 2MB
-                  </p>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className="w-16 h-16 text-indigo-400 mx-auto mb-4" />
+                    <p className="text-indigo-900 font-medium mb-2">
+                      Drag & drop your CSV file here, or
+                    </p>
+                    <label htmlFor="csv-upload" className="text-indigo-600 hover:text-indigo-900 underline cursor-pointer">
+                      browse files
+                    </label>
+                  </div>
+                )}
+              </label>
+            </div>
+          )}
+
+          {mode === "paste" && (
+            <textarea
+              value={pasteData}
+              onChange={(e) => setPasteData(e.target.value)}
+              placeholder="Paste emails here (one per line)&#10;&#10;john@example.com&#10;jane@company.io&#10;hello@startup.com"
+              className="w-full h-48 px-4 py-3 rounded-lg border border-indigo-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 font-mono text-sm resize-none"
+            />
+          )}
+
+          <div className="flex gap-3 mt-6">
+            <Button 
+              variant="ghost" 
+              onClick={() => setStep("name")}
+            >
+              Back
+            </Button>
+            <Button 
+              variant="cta" 
+              className="flex-1"
+              onClick={() => setStep("preview")}
+              disabled={!file && !pasteData.trim()}
+            >
+              Preview {leadCount} leads
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </Card>
+        </SlideUp>
+      )}
+
+      {/* Step 3: Preview & Confirm */}
+      {step === "preview" && (
+        <SlideUp key="step-preview">
+          <Card className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-indigo-900 mb-2">Review your leads</h2>
+          <p className="text-indigo-600 mb-6">
+            {leadCount} leads ready to analyze. Confirm and start scoring.
+          </p>
+
+          {previewData.length > 0 && (
+            <div className="border rounded-xl overflow-hidden mb-6">
+              <table className="min-w-full text-sm">
+                <thead className="bg-indigo-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold text-indigo-900">Email</th>
+                    <th className="px-4 py-3 text-left font-semibold text-indigo-900">Name</th>
+                    <th className="px-4 py-3 text-left font-semibold text-indigo-900">Company</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewData.map((lead, i) => (
+                    <tr key={i} className="border-t border-indigo-100">
+                      <td className="px-4 py-3 text-indigo-900">{lead.email}</td>
+                      <td className="px-4 py-3 text-indigo-600">{lead.name || "-"}</td>
+                      <td className="px-4 py-3 text-indigo-600">{lead.company || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {leadCount && leadCount > 5 && (
+                <div className="bg-indigo-50 px-4 py-3 text-center text-indigo-600 text-sm">
+                  +{leadCount - 5} more leads
                 </div>
               )}
-            </label>
-          </div>
-
-          {/* Preview Section */}
-          {previewData.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium text-slate-700 mb-2">
-                Preview ({leadCount} leads detected)
-              </h3>
-              <div className="border rounded-lg overflow-hidden">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left font-medium text-slate-600">Email</th>
-                      <th className="px-4 py-2 text-left font-medium text-slate-600">Name</th>
-                      <th className="px-4 py-2 text-left font-medium text-slate-600">Company</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {previewData.map((lead, i) => (
-                      <tr key={i} className="border-t">
-                        <td className="px-4 py-2 text-slate-900">{lead.email}</td>
-                        <td className="px-4 py-2 text-slate-600">{lead.name || "-"}</td>
-                        <td className="px-4 py-2 text-slate-600">{lead.company || "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {leadCount && leadCount > 5 && (
-                  <p className="text-xs text-slate-500 p-2 bg-slate-50">
-                    +{leadCount - 5} more leads
-                  </p>
-                )}
-              </div>
             </div>
           )}
 
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg">
-            <p className="text-sm font-medium text-slate-700 mb-2">CSV Format</p>
-            <p className="text-xs text-slate-500 font-mono">
-              email,name,company,signup_note,source,created_at
-            </p>
-            <p className="text-xs text-slate-500 font-mono mt-1">
-              john@example.com,John Doe,Acme Inc,I need this for my startup,referral,2024-01-15
-            </p>
+          <div className="bg-indigo-50 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-indigo-900">Free Plan Usage</span>
+              <span className="text-sm text-indigo-600">{usedLeads + (leadCount || 0)}/50 leads</span>
+            </div>
+            <div className="h-2 bg-indigo-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-500 transition-all duration-500"
+                style={{ width: `${((usedLeads + (leadCount || 0)) / 50) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Button 
+              variant="ghost" 
+              onClick={() => setStep("source")}
+            >
+              Back
+            </Button>
+            <Button 
+              variant="cta" 
+              className="flex-1"
+              onClick={handleSubmit}
+              disabled={uploading}
+              loading={uploading}
+            >
+              Start Analysis
+              <Play className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         </Card>
-      ) : (
-        <Card variant="default">
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Email List
-          </label>
-          <textarea
-            value={pasteData}
-            onChange={(e) => setPasteData(e.target.value)}
-            placeholder="Paste emails here (one per line or comma-separated)&#10;&#10;john@example.com&#10;jane@company.io&#10;hello@startup.com"
-            className="input h-48 font-mono text-sm"
-          />
-          {leadCount !== null && pasteData.trim() && (
-            <p className="mt-2 text-sm text-slate-500">
-              {leadCount} email{leadCount !== 1 ? "s" : ""} detected
-            </p>
-          )}
-          <p className="mt-2 text-xs text-slate-500">
-            Emails will be assigned an &ldquo;imported&rdquo; source and current timestamp
-          </p>
-        </Card>
+        </SlideUp>
       )}
-
-      <div className="flex gap-3 mt-6">
-        {file && !uploading && (
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleCancel}
-          >
-            <X className="w-4 h-4" />
-            Cancel
-          </Button>
-        )}
-        <Button
-          type="button"
-          variant="primary"
-          onClick={handleSubmit}
-          disabled={uploading}
-          loading={uploading}
-        >
-          Start Analysis
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {uploading && (
-        <div className="mt-4">
-          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-slate-900 transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            />
-          </div>
-          <p className="text-sm text-slate-600 mt-2 text-center">
-            Uploading... {uploadProgress}%
-          </p>
-        </div>
-      )}
-
-      {/* Footer */}
-      <footer className="mt-12 pt-6 border-t border-slate-200">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-          <p>&copy; 2026 ConvertList</p>
-          <div className="flex items-center gap-6">
-            <Link href="/privacy" className="hover:text-slate-700">Privacy</Link>
-            <Link href="/terms" className="hover:text-slate-700">Terms</Link>
-            <a href="mailto:support@convertlist.ai" className="hover:text-slate-700">Contact</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

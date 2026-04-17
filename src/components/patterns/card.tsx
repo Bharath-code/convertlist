@@ -2,7 +2,8 @@ import { Card as ShadcnCard } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "featured" | "elevated";
+  variant?: "default" | "elevated" | "featured" | "glass";
+  hoverable?: boolean;
   children: React.ReactNode;
   noPadding?: boolean;
 }
@@ -10,33 +11,52 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 /**
  * ConvertList Card Component
  * 
- * Follows design system card patterns:
- * - Default: Standard white card with subtle border
- * - Featured: Dark gradient card for emphasis
- * - Elevated: Card with more shadow for prominence
+ * World-class card component following the new design system:
+ * - Default: Standard white card with indigo border
+ * - Elevated: Card with medium shadow for prominence
+ * - Featured: Indigo gradient card for emphasis
+ * - Glass: Glass morphism with backdrop blur
+ * 
+ * Features:
+ * - Optional hover behavior with shadow and translate
+ * - Consistent rounded-xl (12px) for modern feel
+ * - Better shadow hierarchy (sm, md, lg, xl, 2xl)
+ * - Smooth transitions (300ms)
+ * - WCAG AA compliant colors
  * 
  * @example
  * <Card variant="default">Content</Card>
  * <Card variant="featured">Featured content</Card>
- * <Card variant="elevated">Elevated content</Card>
- * <Card variant="default" noPadding>Content without default padding</Card>
+ * <Card variant="glass" hoverable>Interactive card</Card>
+ * <Card variant="default" noPadding>Content without padding</Card>
  */
 export function Card({
   variant = "default",
+  hoverable = true,
   className,
   children,
   noPadding = false,
   ...props
 }: CardProps) {
   const variantStyles = {
-    default: "bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1",
-    featured: "bg-gradient-to-br from-slate-900 to-slate-800 text-white border-2 border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 rounded-2xl",
-    elevated: "bg-white rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1",
+    default: "bg-white rounded-xl border border-indigo-100 shadow-sm",
+    elevated: "bg-white rounded-xl border border-indigo-100 shadow-md",
+    featured: "bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0 shadow-xl",
+    glass: "bg-white/80 backdrop-blur-xl rounded-xl border border-white/20 shadow-sm",
   };
+  
+  const hoverStyles = hoverable 
+    ? "hover:shadow-lg hover:-translate-y-1 transition-all duration-300" 
+    : "";
   
   return (
     <ShadcnCard
-      className={cn(variantStyles[variant], noPadding ? "" : "p-8", className)}
+      className={cn(
+        variantStyles[variant],
+        hoverStyles,
+        noPadding ? "" : "p-6",
+        className
+      )}
       {...props}
     >
       {children}
@@ -58,7 +78,7 @@ export function CardTitle({
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn("text-xl font-bold leading-none", className)} {...props} />
+    <h3 className={cn("text-xl font-bold leading-none text-indigo-900", className)} {...props} />
   );
 }
 
@@ -67,7 +87,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm text-slate-600", className)} {...props} />
+    <p className={cn("text-sm text-indigo-600", className)} {...props} />
   );
 }
 

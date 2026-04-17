@@ -37,6 +37,7 @@ import PricingIntelligenceDashboard from "@/components/pricing-intelligence-dash
 import LaunchDayCommandCenter from "@/components/launch-day-command-center";
 import ViralityAnalyticsDashboard from "@/components/virality-analytics-dashboard";
 import CompetitorInsightsDashboard from "@/components/competitor-insights-dashboard";
+import { StaggerContainer, SlideUp } from "@/components/motion";
 
 type Lead = {
   id: string;
@@ -597,23 +598,25 @@ export default function ResultsClient({
                 {selectedLeads.size > 0 ? `${selectedLeads.size} selected` : `${filteredLeads.length} leads`}
               </span>
             </div>
-            {filteredLeads.map((lead) => (
-              <div key={lead.id} className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={selectedLeads.has(lead.id)}
-                  onChange={() => toggleSelectLead(lead.id)}
-                  className="w-4 h-4 rounded border-slate-300 mt-1"
-                  aria-label={`Select ${lead.email}`}
-                />
-                <LeadCard
-                  lead={lead}
-                  onEnrich={() => setEnrichingLead(lead)}
-                  onCopyEmail={() => copyEmail(lead.email)}
-                  onGenerateDemoScript={() => setDemoScriptLead(lead)}
-                />
-              </div>
-            ))}
+            <StaggerContainer>
+              {filteredLeads.map((lead) => (
+                <div key={lead.id} className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedLeads.has(lead.id)}
+                    onChange={() => toggleSelectLead(lead.id)}
+                    className="w-4 h-4 rounded border-slate-300 mt-1"
+                    aria-label={`Select ${lead.email}`}
+                  />
+                  <LeadCard
+                    lead={lead}
+                    onEnrich={() => setEnrichingLead(lead)}
+                    onCopyEmail={() => copyEmail(lead.email)}
+                    onGenerateDemoScript={() => setDemoScriptLead(lead)}
+                  />
+                </div>
+              ))}
+            </StaggerContainer>
           </>
         )}
       </div>

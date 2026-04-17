@@ -118,24 +118,30 @@ async function scoreLeadBatch(leads: LeadInput[]) {
     }
   }
 
-  // Update all leads with reply addresses and track for analytics
-  await Promise.all(
-    scored.map(async (lead) => {
-      await db.lead.update({
-        where: { id: lead.id },
-        data: {
-          score: lead.totalScore,
-          confidence: lead.confidence,
-          reason: lead.reason,
-          segment: lead.segment,
-          replyForwarder: generateReplyAddress(lead.id),
-        },
-      });
+  // Update all leads with reply addresses using bulk operations
+  // Process in batches to avoid overwhelming the database
+  const UPDATE_BATCH_SIZE = 50;
+  for (let i = 0; i < scored.length; i += UPDATE_BATCH_SIZE) {
+    const batch = scored.slice(i, i + UPDATE_BATCH_SIZE);
+    
+    await Promise.all(
+      batch.map(async (lead) => {
+        await db.lead.update({
+          where: { id: lead.id },
+          data: {
+            score: lead.totalScore,
+            confidence: lead.confidence,
+            reason: lead.reason,
+            segment: lead.segment,
+            replyForwarder: generateReplyAddress(lead.id),
+          },
+        });
 
-      // Track lead scored for conversion analytics
-      await trackLeadScored(lead.id);
-    })
-  );
+        // Track lead scored for conversion analytics
+        await trackLeadScored(lead.id);
+      })
+    );
+  }
 }
 
 interface ScoredLead extends LeadInput {

@@ -24,6 +24,9 @@ model User {
   crossProductBehavior  String?
   superUserScore        Float?
   lifetimeValuePrediction Float?
+
+  @@index([clerkId])
+  @@index([email])
 }
 
 model Waitlist {
@@ -117,6 +120,8 @@ model Lead {
 
   @@index([waitlistId])
   @@index([email])
+  @@index([createdAt])
+  @@index([importedAt])
 }
 
 model Sequence {

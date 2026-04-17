@@ -37,16 +37,19 @@ interface ResendInboundEmail {
 
 export async function POST(req: Request) {
   try {
-    // Verify webhook signature (optional in development, required in production)
-    if (process.env.RESEND_WEBHOOK_SECRET) {
+    // Verify webhook signature (required in production)
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction || process.env.RESEND_WEBHOOK_SECRET) {
       const isValid = await verifyWebhookSignature(req, "resend");
       if (!isValid) {
-        console.warn("Invalid webhook signature");
+        console.warn("Invalid webhook signature from Resend");
         return NextResponse.json(
           { error: "Invalid signature" },
           { status: 401 }
         );
       }
+    } else {
+      console.warn("⚠️  Webhook signature verification disabled in development");
     }
 
     const body: ResendInboundEmail = await req.json();

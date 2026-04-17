@@ -12,6 +12,8 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const waitlistId = searchParams.get("waitlistId");
+    const cursor = searchParams.get("cursor");
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100); // Max 100 per page
 
     const { db } = await import("@/lib/db");
 
@@ -28,10 +30,19 @@ export async function GET(req: Request) {
     const leads = await db.lead.findMany({
       where,
       orderBy: { score: "desc" },
-      take: 100,
+      take: limit + 1, // Fetch one extra to determine if there's a next page
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
 
-    return NextResponse.json({ leads });
+    const hasMore = leads.length > limit;
+    const items = hasMore ? leads.slice(0, limit) : leads;
+    const nextCursor = hasMore ? items[items.length - 1].id : null;
+
+    return NextResponse.json({
+      leads: items,
+      nextCursor,
+      hasMore,
+    });
   } catch (error) {
     console.error("Leads fetch error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

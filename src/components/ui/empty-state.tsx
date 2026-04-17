@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/patterns';
 
 interface EmptyStateProps {
   icon?: LucideIcon;
@@ -7,43 +8,69 @@ interface EmptyStateProps {
   description: string;
   action?: {
     label: string;
-    href: string;
+    href?: string;
     onClick?: () => void;
+    variant?: "primary" | "cta" | "secondary";
   };
   secondaryAction?: {
     label: string;
     href: string;
   };
+  illustration?: React.ReactNode;
 }
 
+/**
+ * ConvertList Empty State Component
+ * 
+ * World-class empty state component following the new design system:
+ * - Optional custom illustration for visual appeal
+ * - Better visual hierarchy with enhanced spacing
+ * - Improved typography with indigo theme
+ * - Action buttons for user guidance
+ * - WCAG AA compliant colors
+ * 
+ * @example
+ * <EmptyState icon={Users} title="No waitlists" description="Upload your first waitlist" action={{ label: "Upload", href: "/upload" }} />
+ */
 export function EmptyState({
   icon: Icon,
   title,
   description,
   action,
   secondaryAction,
+  illustration,
 }: EmptyStateProps) {
   return (
-    <div className="card text-center py-12">
-      {Icon && (
-        <Icon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+      {illustration ? (
+        <div className="w-64 h-64 mb-8 opacity-50">
+          {illustration}
+        </div>
+      ) : Icon && (
+        <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mb-6">
+          <Icon className="w-8 h-8 text-indigo-500" />
+        </div>
       )}
-      <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
-      <p className="text-slate-600 mb-6 max-w-sm mx-auto">{description}</p>
+      <h3 className="text-xl font-semibold text-indigo-900 mb-2">{title}</h3>
+      <p className="text-indigo-600 max-w-md mb-8 leading-relaxed">{description}</p>
       {action && (
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           {action.href ? (
-            <Link href={action.href} className="btn-primary">
-              {action.label}
+            <Link href={action.href}>
+              <Button variant={action.variant || "primary"}>
+                {action.label}
+              </Button>
             </Link>
           ) : (
-            <button onClick={action.onClick} className="btn-primary">
+            <Button variant={action.variant || "primary"} onClick={action.onClick}>
               {action.label}
-            </button>
+            </Button>
           )}
           {secondaryAction && (
-            <Link href={secondaryAction.href} className="btn-secondary">
-              {secondaryAction.label}
+            <Link href={secondaryAction.href}>
+              <Button variant="secondary">
+                {secondaryAction.label}
+              </Button>
             </Link>
           )}
         </div>
@@ -58,8 +85,8 @@ export function EmptyWaitlist() {
     <EmptyState
       icon={require('lucide-react').Users}
       title="No waitlists yet"
-      description="Upload your first waitlist to start analyzing and converting your leads."
-      action={{ label: "Upload your first waitlist", href: "/upload" }}
+      description="Upload your first waitlist to start analyzing and converting your leads with AI-powered scoring."
+      action={{ label: "Upload your first waitlist", href: "/upload", variant: "cta" }}
     />
   );
 }
@@ -69,7 +96,7 @@ export function EmptyLeads() {
     <EmptyState
       icon={require('lucide-react').Mail}
       title="No leads found"
-      description="There are no leads in this segment yet."
+      description="There are no leads in this segment yet. Try adjusting your filters or upload a new waitlist."
     />
   );
 }
@@ -79,7 +106,7 @@ export function EmptySearch() {
     <EmptyState
       icon={require('lucide-react').Search}
       title="No results found"
-      description="Try adjusting your search terms or filters."
+      description="Try adjusting your search terms or filters to find what you're looking for."
     />
   );
 }
@@ -89,7 +116,7 @@ export function EmptyEnrichment() {
     <EmptyState
       icon={require('lucide-react').Sparkles}
       title="No enrichment data"
-      description="Enrichment data will appear here after processing."
+      description="Enrichment data will appear here after processing. Check back once analysis is complete."
     />
   );
 }

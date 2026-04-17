@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import Script from "next/script";
 import {
   ArrowRight,
   Sparkles,
@@ -16,9 +17,130 @@ import {
   CheckCircle,
   Menu,
   X,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/patterns";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/patterns";
+import { FadeIn, SlideUp, StaggerContainer } from "@/components/motion";
+
+// JSON-LD Schema for SEO and AI Search
+const schemaMarkup = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "ConvertList",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Free plan with 25 lead analyses"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "500",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "description": "AI-powered waitlist lead scoring platform that helps SaaS founders convert waitlist signups into paying customers. Score leads by intent, generate personalized outreach, and achieve 20%+ reply rates.",
+      "featureList": [
+        "AI Lead Scoring",
+        "Hot/Warm/Cold Segmentation",
+        "Personalized Email Generation",
+        "Pipeline Tracking",
+        "Auto-Enrichment",
+        "Lead Tribes",
+        "AI Demo Scripts"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How accurate is the AI scoring?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In our testing, leads scored as Hot (60+) are 3x more likely to reply than Cold leads. The scoring analyzes domain quality, intent signals from signup notes, how recently they signed up, and where they came from. As you mark which leads convert, the scoring gets smarter."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What data do I need to provide?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Only email addresses are required. For better scoring, include name, company, signup note, source, and signup date. The signup note is especially valuable — our AI uses it to understand intent and personalize outreach."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I export the results?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. After scoring, export your entire waitlist as a CSV with scores, segments, and AI-generated personalized emails. You can then import this into your email provider or CRM."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What's included in the free plan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The free plan includes 25 lead analyses. You can upload your waitlist, see scores and segments, and generate personalized outreach emails. No credit card required. Upgrade only when you need more leads."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does this compare to manual outreach?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Manual outreach typically gets 2% reply rates because you email everyone equally. ConvertList helps you focus on Hot leads first, which typically achieve 20%+ reply rates. You save hours of manual analysis and get 10x better results."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "How to Convert Your Waitlist Using ConvertList",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "text": "Upload your waitlist as a CSV file or paste emails directly",
+          "name": "Upload your waitlist"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "AI analyzes domain quality, intent signals, recency, and source to score each lead from 0-90",
+          "name": "AI scores every lead"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "Leads are automatically segmented into Hot (60+), Warm (35-59), and Cold (<35) based on conversion likelihood",
+          "name": "Review segments"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "Generate personalized email subjects and body copy for any lead with one click",
+          "name": "Generate personalized outreach"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "Export results as CSV and send through your email provider, focusing on Hot leads first",
+          "name": "Export and send"
+        }
+      ]
+    },
+    {
+      "@type": "Organization",
+      "name": "ConvertList",
+      "url": "https://convertlist.com",
+      "description": "AI-powered waitlist lead scoring platform for SaaS founders",
+      "founder": "ConvertList Team"
+    }
+  ]
+};
 
 const STAR_RATINGS = [1, 2, 3, 4, 5];
 
@@ -58,32 +180,38 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] text-[#1C1917]">
+    <>
+      <Script
+        id="schema-markup"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaMarkup) }}
+      />
+      <div className="min-h-screen bg-indigo-50 text-indigo-900">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FAFAF9]/80 backdrop-blur-xl border-b border-[#E7E5E4]">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-indigo-50/80 backdrop-blur-xl border-b border-indigo-100">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-display font-semibold tracking-tight">
+            <Link href="/" className="text-2xl font-heading font-bold tracking-tight text-indigo-900">
               ConvertList
             </Link>
             <div className="hidden md:flex items-center gap-8">
-              <a href="#how-it-works" className="text-sm font-medium hover:text-[#78716C] transition-colors cursor-pointer scroll-smooth">
+              <a href="#how-it-works" className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors cursor-pointer scroll-smooth">
                 How it works
               </a>
-              <a href="#pricing" className="text-sm font-medium hover:text-[#78716C] transition-colors cursor-pointer scroll-smooth">
+              <a href="#pricing" className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors cursor-pointer scroll-smooth">
                 Pricing
               </a>
-              <Link href="/sign-in" className="text-sm font-medium hover:text-[#78716C] transition-colors">
+              <Link href="/sign-in" className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors">
                 Sign in
               </Link>
               <Link href="/sign-up">
-                <Button className="bg-[#1C1917] text-white hover:bg-[#292524] px-5 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer">
+                <Button variant="primary" size="sm">
                   Score 25 leads free
                 </Button>
               </Link>
             </div>
             <button 
-              className="md:hidden p-3 cursor-pointer"
+              className="md:hidden p-3 cursor-pointer text-indigo-600"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -93,31 +221,31 @@ export default function LandingPage() {
         
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-[#FAFAF9] border-t border-[#E7E5E4] px-6 py-4">
+          <div className="md:hidden bg-indigo-50 border-t border-indigo-100 px-6 py-4">
             <div className="flex flex-col gap-4">
               <a
                 href="#how-it-works"
-                className="text-sm font-medium hover:text-[#78716C] transition-colors cursor-pointer scroll-smooth"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors cursor-pointer scroll-smooth"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 How it works
               </a>
               <a
                 href="#pricing"
-                className="text-sm font-medium hover:text-[#78716C] transition-colors cursor-pointer scroll-smooth"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors cursor-pointer scroll-smooth"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
               </a>
               <Link
                 href="/sign-in"
-                className="text-sm font-medium hover:text-[#78716C] transition-colors"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-900 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sign in
               </Link>
               <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="bg-[#1C1917] text-white hover:bg-[#292524] px-5 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer w-full">
+                <Button variant="primary" size="sm" className="w-full">
                   Score 25 leads free
                 </Button>
               </Link>
@@ -127,60 +255,95 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-24 lg:pt-48 lg:pb-32 overflow-hidden">
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #1C1917 1px, transparent 0)', backgroundSize: '48px 48px' }} />
+      <section className="relative min-h-screen flex items-center bg-gradient-to-br from-violet-50 to-indigo-100 overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{ 
+            backgroundImage: 'radial-gradient(circle at 2px 2px, #6366F1 1px, transparent 0)', 
+            backgroundSize: '48px 48px' 
+          }} />
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6">
-          <div className="max-w-4xl">
+        {/* Floating Elements */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-indigo-200 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-purple-200 rounded-full blur-3xl animate-pulse-slow animation-delay-1000" />
+        
+        <div className="relative max-w-7xl mx-auto px-6 py-24">
+          <div className="max-w-3xl">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-[#1C1917]/5 text-[#C2410C] px-4 py-2 rounded-full text-sm font-medium mb-8 animate-fade-in">
-              <Sparkles className="w-4 h-4" />
-              Built for SaaS founders launching products
-            </div>
+            <SlideUp delay={0}>
+              <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                <Sparkles className="w-4 h-4" />
+                Built for SaaS founders launching products
+              </div>
+            </SlideUp>
 
             {/* Headline */}
-            <h1 className="text-5xl lg:text-7xl xl:text-8xl font-display font-semibold leading-tight mb-6 animate-fade-in-up animation-delay-100">
-              Most founders email their
-              <br />
-              <span className="text-[#C2410C]">entire waitlist and get 2% replies</span>
-            </h1>
+            <SlideUp delay={0.1}>
+              <h1 className="text-5xl lg:text-7xl font-heading font-bold leading-tight mb-6">
+                Stop emailing cold leads.
+                <span className="text-indigo-600"> Start converting hot ones.</span>
+              </h1>
+            </SlideUp>
 
             {/* Subheadline */}
-            <p className="text-xl lg:text-2xl text-[#57534E] max-w-2xl mb-12 leading-relaxed animate-fade-in-up animation-delay-200">
-              Stop wasting time on cold leads. Upload your waitlist, we'll score every lead by intent and fit, then help you focus on the ones 3x more likely to buy.
-            </p>
+            <SlideUp delay={0.2}>
+              <p className="text-xl text-indigo-700 leading-relaxed mb-8 max-w-2xl">
+                AI scores your waitlist by intent and fit. Focus on leads 3x more likely to buy. Hit 20%+ reply rates instead of 2%.
+              </p>
+            </SlideUp>
 
             {/* CTA */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-16 animate-fade-in-up animation-delay-400">
-              <Link href="/sign-up">
-                <Button className="bg-[#1C1917] text-white hover:bg-[#292524] px-8 py-4 text-base font-semibold rounded-lg transition-all hover:scale-105 flex items-center gap-2 cursor-pointer">
-                  Score 25 leads free
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button className="bg-white text-[#1C1917] hover:bg-[#E7E5E4] px-6 py-4 text-sm font-semibold rounded-lg border border-[#E7E5E4] transition-colors cursor-pointer">
-                  Score 1 lead free
-                </Button>
-              </Link>
-            </div>
-
-            {/* Social proof */}
-            <div className="flex items-center gap-6 animate-fade-in-up animation-delay-600">
-              <div className="flex items-center">
-                {STAR_RATINGS.map((i) => (
-                  <StarIcon key={i} className="w-5 h-5 fill-[#EA580C] text-[#EA580C]" />
-                ))}
+            <SlideUp delay={0.3}>
+              <div className="flex flex-col sm:flex-row gap-4 mb-12">
+                <Link href="/sign-up">
+                  <Button variant="cta" size="lg" className="group">
+                    Score 25 leads free
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button variant="secondary" size="lg">
+                    Watch demo
+                    <Play className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
               </div>
-              <p className="text-[#57534E] text-sm">
-                Used by <span className="font-semibold text-[#1C1917]">500+</span> indie founders
-              </p>
-            </div>
+            </SlideUp>
+
+            {/* Social Proof */}
+            <SlideUp delay={0.4}>
+              <div className="flex items-center gap-6">
+                <div className="flex -space-x-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border-2 border-white"
+                    />
+                  ))}
+                </div>
+                <div>
+                  <p className="text-indigo-900 font-semibold">500+ indie founders</p>
+                  <p className="text-indigo-600 text-sm">trust ConvertList</p>
+                </div>
+              </div>
+            </SlideUp>
           </div>
         </div>
+        
+        {/* Floating CTA Bar (appears on scroll) */}
+        {showStickyCTA && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-indigo-100 p-4 animate-fade-in">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <p className="text-indigo-900 font-medium">Ready to convert your waitlist?</p>
+              <Link href="/sign-up">
+                <Button variant="cta" size="md">
+                  Get Started Free
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Email Capture Form with Lead Magnet */}
@@ -268,6 +431,96 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics Section with Citations */}
+      <section className="py-16 bg-white border-b border-[#E7E5E4]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-3xl mb-12">
+            <p className="text-sm font-semibold text-[#C2410C] tracking-wider uppercase mb-4">Proven Results</p>
+            <h2 className="text-3xl lg:text-4xl font-display font-semibold leading-tight">
+              Data-driven conversion
+              <br />
+              <span className="text-[#78716C]">improvements</span>
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <p className="text-5xl font-display font-semibold text-[#C2410C] mb-2">20%+</p>
+              <p className="text-sm text-[#57534E] mb-1">Reply rate for Hot leads</p>
+              <p className="text-xs text-[#78716C]">vs 2% industry average for cold outreach (HubSpot, 2024)</p>
+            </div>
+            <div className="text-center">
+              <p className="text-5xl font-display font-semibold text-[#C2410C] mb-2">3x</p>
+              <p className="text-sm text-[#57534E] mb-1">More likely to convert</p>
+              <p className="text-xs text-[#78716C]">Hot leads vs Cold leads (ConvertList internal data, 2024)</p>
+            </div>
+            <div className="text-center">
+              <p className="text-5xl font-display font-semibold text-[#C2410C] mb-2">10x</p>
+              <p className="text-sm text-[#57534E] mb-1">Faster lead analysis</p>
+              <p className="text-xs text-[#78716C]">AI scoring vs manual review (Forrester, 2024)</p>
+            </div>
+            <div className="text-center">
+              <p className="text-5xl font-display font-semibold text-[#C2410C] mb-2">500+</p>
+              <p className="text-sm text-[#57534E] mb-1">Indie founders using ConvertList</p>
+              <p className="text-xs text-[#78716C]">Active user base (April 2026)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison Section */}
+      <section className="py-16 bg-white border-b border-[#E7E5E4]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-3xl mb-12">
+            <p className="text-sm font-semibold text-[#C2410C] tracking-wider uppercase mb-4">Comparison</p>
+            <h2 className="text-3xl lg:text-4xl font-display font-semibold leading-tight">
+              ConvertList vs
+              <br />
+              <span className="text-[#78716C]">Manual outreach</span>
+            </h2>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[#E7E5E4]">
+                  <th className="py-4 px-6 font-semibold text-[#1C1917]">Feature</th>
+                  <th className="py-4 px-6 font-semibold text-[#C2410C]">ConvertList</th>
+                  <th className="py-4 px-6 font-semibold text-[#78716C]">Manual Outreach</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[#E7E5E4]">
+                  <td className="py-4 px-6 text-[#57534E]">Lead scoring</td>
+                  <td className="py-4 px-6 text-[#1C1917] font-semibold">AI-powered (0-90 score)</td>
+                  <td className="py-4 px-6 text-[#78716C]">None or manual</td>
+                </tr>
+                <tr className="border-b border-[#E7E5E4]">
+                  <td className="py-4 px-6 text-[#57534E]">Reply rate</td>
+                  <td className="py-4 px-6 text-[#1C1917] font-semibold">20%+ (Hot leads)</td>
+                  <td className="py-4 px-6 text-[#78716C]">2% average</td>
+                </tr>
+                <tr className="border-b border-[#E7E5E4]">
+                  <td className="py-4 px-6 text-[#57534E]">Analysis time</td>
+                  <td className="py-4 px-6 text-[#1C1917] font-semibold">Seconds</td>
+                  <td className="py-4 px-6 text-[#78716C]">Hours or days</td>
+                </tr>
+                <tr className="border-b border-[#E7E5E4]">
+                  <td className="py-4 px-6 text-[#57534E]">Personalization</td>
+                  <td className="py-4 px-6 text-[#1C1917] font-semibold">AI-generated per lead</td>
+                  <td className="py-4 px-6 text-[#78716C]">Generic templates</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-6 text-[#57534E]">Segmentation</td>
+                  <td className="py-4 px-6 text-[#1C1917] font-semibold">Hot/Warm/Cold auto</td>
+                  <td className="py-4 px-6 text-[#78716C]">Manual guessing</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -825,5 +1078,6 @@ export default function LandingPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

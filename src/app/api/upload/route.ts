@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,25 @@ export async function POST(req: Request) {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 10 uploads per minute per user
+    const rateLimitResult = rateLimit(`upload:${userId}`, 10, 60000);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "Too many upload requests",
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+          },
+        }
+      );
     }
 
     const formData = await req.formData();
@@ -102,7 +122,8 @@ export async function POST(req: Request) {
         })),
       });
 
-      const leadCount = await db.lead.count({ where: { waitlistId: waitlist.id } });
+      // Use actual lead count instead of querying again
+      const leadCount = leads.length;
       await db.waitlist.update({
         where: { id: waitlist.id },
         data: { totalLeads: leadCount },
@@ -162,7 +183,8 @@ export async function POST(req: Request) {
         })),
       });
 
-      const leadCount = await db.lead.count({ where: { waitlistId: waitlist.id } });
+      // Use actual lead count instead of querying again
+      const leadCount = emails.length;
       await db.waitlist.update({
         where: { id: waitlist.id },
         data: { totalLeads: leadCount },
@@ -194,10 +216,48 @@ interface CSVLead {
 }
 
 function parseCSV(text: string): CSVLead[] {
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  // Proper CSV parser that handles quoted strings and escaped quotes
+  const lines: string[] = [];
+  let currentLine = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote inside quoted string
+        currentLine += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+        currentLine += '"';
+      }
+    } else if (char === '\n' && !inQuotes) {
+      // End of line
+      lines.push(currentLine.trim());
+      currentLine = '';
+    } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
+      // Windows line ending
+      lines.push(currentLine.trim());
+      currentLine = '';
+      i++; // Skip \n
+    } else {
+      currentLine += char;
+    }
+  }
+  
+  // Add last line if exists
+  if (currentLine.trim()) {
+    lines.push(currentLine.trim());
+  }
+  
   if (lines.length < 2) return [];
 
-  const headers = lines[0].toLowerCase().split(",").map((h) => h.trim());
+  // Parse header line
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
   const emailIdx = headers.findIndex((h) => h === "email");
   if (emailIdx === -1) return [];
 
@@ -205,8 +265,8 @@ function parseCSV(text: string): CSVLead[] {
   const seenEmails = new Set<string>();
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(",").map((v) => v.trim());
-    const email = values[emailIdx]?.toLowerCase();
+    const values = parseCSVLine(lines[i]);
+    const email = values[emailIdx]?.toLowerCase().trim();
 
     if (!email || !email.includes("@")) continue;
     if (seenEmails.has(email)) continue;
@@ -214,15 +274,51 @@ function parseCSV(text: string): CSVLead[] {
 
     leads.push({
       email,
-      name: values[headers.findIndex((h) => h === "name")] || undefined,
-      company: values[headers.findIndex((h) => h === "company")] || undefined,
-      signupNote: values[headers.findIndex((h) => h === "signup_note" || h === "note")] || undefined,
-      source: values[headers.findIndex((h) => h === "source")] || undefined,
-      createdAt: values[headers.findIndex((h) => h === "created_at" || h === "createdat")] || undefined,
+      name: values[headers.findIndex((h) => h === "name")]?.trim() || undefined,
+      company: values[headers.findIndex((h) => h === "company")]?.trim() || undefined,
+      signupNote: values[headers.findIndex((h) => h === "signup_note" || h === "note")]?.trim() || undefined,
+      source: values[headers.findIndex((h) => h === "source")]?.trim() || undefined,
+      createdAt: values[headers.findIndex((h) => h === "created_at" || h === "createdat")]?.trim() || undefined,
     });
   }
 
   return leads;
+}
+
+/**
+ * Parse a single CSV line, handling quoted fields and escaped quotes
+ */
+function parseCSVLine(line: string): string[] {
+  const fields: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote inside quoted string
+        currentField += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator
+      fields.push(currentField);
+      currentField = '';
+    } else {
+      currentField += char;
+    }
+  }
+  
+  // Add last field
+  fields.push(currentField);
+  
+  return fields;
 }
 
 function parsePasteList(text: string): string[] {
