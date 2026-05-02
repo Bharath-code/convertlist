@@ -147,9 +147,6 @@ const STAR_RATINGS = [1, 2, 3, 4, 5];
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
-  const [demoEmails, setDemoEmails] = useState("");
-  const [demoScore, setDemoScore] = useState<number | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -181,18 +178,6 @@ export default function LandingPage() {
     if (utmContentInput && utmContent) utmContentInput.value = utmContent;
     if (utmTermInput && utmTerm) utmTermInput.value = utmTerm;
   }, []);
-
-  const handleDemoAnalysis = () => {
-    if (!demoEmails.trim()) return;
-    setIsAnalyzing(true);
-    // Simulate AI analysis
-    setTimeout(() => {
-      const emailCount = demoEmails.split('\n').filter(e => e.includes('@')).length;
-      const avgScore = Math.floor(60 + Math.random() * 25);
-      setDemoScore(avgScore);
-      setIsAnalyzing(false);
-    }, 1500);
-  };
 
   return (
     <>
@@ -346,60 +331,35 @@ export default function LandingPage() {
               </SlideUp>
             </div>
 
-            {/* Interactive Demo */}
+            {/* Data Visualization */}
             <SlideUp delay={0.2} className="hidden lg:block">
               <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Try It Now - Score Your Leads</h3>
-                <p className="text-sm text-slate-600 mb-4">Paste a few emails to see AI scoring in action</p>
-                <textarea
-                  value={demoEmails}
-                  onChange={(e) => setDemoEmails(e.target.value)}
-                  placeholder="john@company.com&#10;sarah@startup.io&#10;mike@enterprise.com"
-                  className="w-full h-32 px-4 py-3 rounded-lg bg-slate-50 text-slate-900 placeholder-slate-500 border border-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm mb-4 resize-none"
-                />
-                <button
-                  onClick={handleDemoAnalysis}
-                  disabled={isAnalyzing || !demoEmails.trim()}
-                  className="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      Score Leads
-                    </>
-                  )}
-                </button>
-                
-                {demoScore !== null && (
-                  <div className="mt-6 pt-6 border-t border-slate-200 animate-fade-in">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-slate-600">Average Lead Score</span>
-                      <span className="text-2xl font-bold text-emerald-600">{demoScore}/90</span>
+                <h3 className="text-lg font-semibold text-slate-900 mb-6">Reply Rate Comparison</h3>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm font-medium text-slate-600">Hot leads (ConvertList)</span>
+                      <span className="text-sm font-bold text-emerald-600">20%+</span>
                     </div>
-                    <div className="h-4 bg-slate-200 rounded-full overflow-hidden mb-3">
-                      <div 
-                        className="h-full bg-emerald-600 rounded-full transition-all duration-1000" 
-                        style={{ width: `${(demoScore / 90) * 100}%` }} 
-                      />
+                    <div className="h-4 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-600 rounded-full" style={{ width: '100%' }} />
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      <span className="text-slate-600">
-                        {demoScore >= 70 ? 'Hot leads detected!' : demoScore >= 50 ? 'Warm leads found' : 'Cold leads - needs nurturing'}
-                      </span>
-                    </div>
-                    <Link href="/sign-up" className="block mt-4 text-center">
-                      <Button variant="primary" size="sm" className="w-full">
-                        Score Your Full List Free
-                      </Button>
-                    </Link>
                   </div>
-                )}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm font-medium text-slate-600">Cold outreach (industry avg)</span>
+                      <span className="text-sm font-bold text-slate-500">2%</span>
+                    </div>
+                    <div className="h-4 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-slate-500 rounded-full" style={{ width: '10%' }} />
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-slate-200">
+                    <p className="text-sm text-slate-600">
+                      <span className="font-semibold text-emerald-600">10x improvement</span> by focusing on high-intent leads
+                    </p>
+                  </div>
+                </div>
               </div>
             </SlideUp>
           </div>
@@ -420,78 +380,7 @@ export default function LandingPage() {
         )}
       </section>
 
-      {/* Social Proof Section - Trust Signals */}
-      <section className="py-16 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-sm font-semibold text-slate-500 uppercase tracking-wider mb-8">Trusted by 500+ indie founders at</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-            {['Y Combinator', 'Techstars', 'Stripe', 'Notion', 'Linear', 'Figma'].map((company) => (
-              <div key={company} className="flex items-center justify-center">
-                <span className="text-lg font-semibold text-slate-400">{company}</span>
-              </div>
-            ))}
-          </div>
-          
-          {/* Testimonials */}
-          <div className="mt-16 grid md:grid-cols-3 gap-8">
-            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-              <div className="flex items-center gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <StarIcon key={i} className="w-4 h-4 fill-emerald-600 text-emerald-600" />
-                ))}
-              </div>
-              <p className="text-slate-700 mb-4 text-sm">"ConvertList helped us identify our hottest leads. We closed $50K in pre-orders from just 20 emails."</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-400" />
-                <div>
-                  <p className="font-semibold text-sm text-slate-900">Sarah Chen</p>
-                  <p className="text-xs text-slate-500">Founder, LaunchPad</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-              <div className="flex items-center gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <StarIcon key={i} className="w-4 h-4 fill-emerald-600 text-emerald-600" />
-                ))}
-              </div>
-              <p className="text-slate-700 mb-4 text-sm">"Finally a tool that understands waitlist conversion. The AI scoring is scary accurate - 3x better reply rates."</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-400" />
-                <div>
-                  <p className="font-semibold text-sm text-slate-900">Mike Rodriguez</p>
-                  <p className="text-xs text-slate-500">CEO, DevTools Inc</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-              <div className="flex items-center gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <StarIcon key={i} className="w-4 h-4 fill-emerald-600 text-emerald-600" />
-                ))}
-              </div>
-              <p className="text-slate-700 mb-4 text-sm">"Saved me 10+ hours of manual lead research. The personalized emails generated actual conversations."</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-400" />
-                <div>
-                  <p className="font-semibold text-sm text-slate-900">Emma Thompson</p>
-                  <p className="text-xs text-slate-500">Indie Hacker</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-8 text-center">
-            <p className="text-sm text-slate-600">
-              <span className="font-semibold text-emerald-600">$2M+</span> in pipeline generated by ConvertList users
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Email Capture Form with Lead Magnet - Moved after value demonstration */}
+      {/* Email Capture Form with Lead Magnet */}
       <div className="max-w-2xl mx-auto mt-24 mb-24 animate-fade-in-up animation-delay-700">
         <div className="bg-white p-8 rounded-lg border border-slate-200 shadow-sm">
           <h3 className="text-2xl font-display font-semibold mb-2 text-slate-900">Score Your Waitlist in 5 Minutes</h3>
@@ -902,24 +791,6 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Limited Time Offer Banner */}
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white p-6 rounded-lg mb-12 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <Zap className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Launch Week Special - 50% Off Lifetime Deal</h3>
-                <p className="text-emerald-100 text-sm">Get unlimited access forever. Offer ends in:</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-2xl font-bold">
-              <span className="bg-white/20 px-3 py-2 rounded">02</span>:
-              <span className="bg-white/20 px-3 py-2 rounded">14</span>:
-              <span className="bg-white/20 px-3 py-2 rounded">36</span>
-            </div>
-          </div>
-
           {/* Free Resource - Reciprocity */}
           <div className="bg-slate-900 text-white p-8 rounded-lg mb-12">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -977,7 +848,7 @@ export default function LandingPage() {
                 <span className="text-xs font-semibold text-emerald-600 bg-emerald-600/10 px-2 py-1 rounded-full">Best for scaling</span>
               </div>
               <p className="text-sm text-slate-600 mb-6">Scale with more leads</p>
-              <p className="text-4xl font-display font-semibold mb-8">$9<span className="text-lg font-normal text-slate-600">/mo</span></p>
+              <p className="text-4xl font-display font-semibold mb-8">$29<span className="text-lg font-normal text-slate-600">/mo</span></p>
               <p className="text-xs text-slate-500 mb-8">Cancel anytime</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3 text-sm">
@@ -1012,7 +883,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-2xl font-display font-semibold mb-2">Pro+</h3>
               <p className="text-sm text-slate-400 mb-6">All 10X features included</p>
-              <p className="text-4xl font-display font-semibold mb-8">$29<span className="text-lg font-normal text-slate-400">/mo</span></p>
+              <p className="text-4xl font-display font-semibold mb-8">$79<span className="text-lg font-normal text-slate-400">/mo</span></p>
               <p className="text-xs text-slate-400 mb-8">No hidden fees</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3 text-sm">
@@ -1045,54 +916,41 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <div className="bg-gradient-to-br from-emerald-600 to-teal-500 text-white p-8 rounded-lg relative border-2 border-emerald-400">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-white text-emerald-600 text-xs font-semibold px-3 py-1 rounded-full">Limited Time - 50% OFF</span>
-              </div>
+            <div className="bg-white p-8 rounded-lg border border-slate-200">
               <h3 className="text-2xl font-display font-semibold mb-2">Launch</h3>
-              <p className="text-sm text-emerald-100 mb-6">One payment, forever</p>
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-sm text-emerald-200 line-through">$97</p>
-                <p className="text-4xl font-display font-semibold">$49<span className="text-lg font-normal text-emerald-100"> one-time</span></p>
-              </div>
-              <p className="text-xs text-emerald-100 mb-8">No monthly fees ever</p>
+              <p className="text-sm text-slate-600 mb-6">One payment, forever</p>
+              <p className="text-sm text-slate-500 line-through mb-1">Value: $297</p>
+              <p className="text-4xl font-display font-semibold mb-8">$97<span className="text-lg font-normal text-slate-600"> one-time</span></p>
+              <p className="text-xs text-slate-500 mb-8">No monthly fees ever</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3 text-sm">
-                  <Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">All Pro+ features</span>
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-slate-900">All Pro+ features</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
-                  <Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">Competitor Analysis</span>
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-slate-900">Competitor Analysis</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
-                  <Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">Network Mapper</span>
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-slate-900">Network Mapper</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
-                  <Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">Multi-Product Intelligence</span>
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-slate-900">Multi-Product Intelligence</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
-                  <Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">Launch Day Command Center</span>
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-slate-900">Launch Day Command Center</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
-                  <Check className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">Lifetime access</span>
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-slate-900">Lifetime access</span>
                 </li>
               </ul>
-              <Link href="/sign-up" className="block text-center py-3 px-6 rounded-lg bg-white text-emerald-600 text-sm font-semibold hover:bg-emerald-50 transition-colors cursor-pointer">
+              <Link href="/sign-up" className="block text-center py-3 px-6 rounded-lg border border-slate-200 text-sm font-semibold hover:border-emerald-300 transition-colors cursor-pointer">
                 Get lifetime access
               </Link>
-            </div>
-          </div>
-          
-          {/* Money Back Guarantee */}
-          <div className="mt-12 text-center">
-            <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full border border-slate-200">
-              <CheckCircle className="w-5 h-5 text-emerald-600" />
-              <span className="text-sm text-slate-600">30-day money-back guarantee on all paid plans</span>
             </div>
           </div>
         </div>
