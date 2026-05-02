@@ -54,12 +54,22 @@ Return ONLY JSON: {"subject": "...", "body": "..."}`;
       const text = result.response.text().trim();
       const match = text.match(/\{[\s\S]*\}/);
       if (match) {
-        const parsed = JSON.parse(match[0]);
-        results.push({ subject: parsed.subject || step.subject, body: parsed.body || step.body });
+        try {
+          const parsed = JSON.parse(match[0]);
+          results.push({ 
+            subject: parsed.subject || step.subject, 
+            body: parsed.body || step.body 
+          });
+        } catch (parseError) {
+          console.warn(`JSON parse failed for ${lead.email}:`, parseError);
+          results.push({ subject: step.subject, body: step.body });
+        }
       } else {
+        console.warn(`No JSON found in AI response for ${lead.email}`);
         results.push({ subject: step.subject, body: step.body });
       }
-    } catch {
+    } catch (error) {
+      console.error(`AI generation failed for ${lead.email}:`, error);
       results.push({ subject: step.subject, body: step.body });
     }
   }

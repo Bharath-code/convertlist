@@ -4,8 +4,7 @@
  * Tracks actual conversion outcomes across all users to build a proprietary scoring model.
  * This is the real moat - data, not features.
  *
- * Note: This is a simplified version that works with the existing schema.
- * Full implementation with ConversionAnalytics model will be added after database setup.
+ * Uses the ConversionAnalytics database model for persistent storage.
  */
 
 export interface SignalWeights {
@@ -24,14 +23,15 @@ export interface ConversionBenchmark {
   sampleSize: number;
 }
 
-// In-memory storage for conversion data (will be replaced with database after setup)
-let conversionData: Record<string, { total: number; converted: number }> = {
-  "domain_company": { total: 0, converted: 0 },
-  "domain_personal": { total: 0, converted: 0 },
-  "intent_urgent": { total: 0, converted: 0 },
-  "intent_specific": { total: 0, converted: 0 },
-  "source_referral": { total: 0, converted: 0 },
-  "recency_recent": { total: 0, converted: 0 },
+type SignalKey = "domain_company" | "domain_personal" | "intent_urgent" | "intent_specific" | "source_referral" | "recency_recent";
+
+const SIGNAL_MAPPING: Record<string, { type: SignalKey; value: string }> = {
+  "domain_company": { type: "domain_company", value: "company" },
+  "domain_personal": { type: "domain_personal", value: "personal" },
+  "intent_urgent": { type: "intent_urgent", value: "urgent" },
+  "intent_specific": { type: "intent_specific", value: "specific" },
+  "source_referral": { type: "source_referral", value: "referral" },
+  "recency_recent": { type: "recency_recent", value: "recent" },
 };
 
 /**
@@ -92,8 +92,32 @@ export async function trackLeadScored(leadId: string) {
   const signals = extractSignals(lead);
 
   for (const signal of signals) {
-    if (conversionData[signal]) {
-      conversionData[signal].total++;
+    const mapping = SIGNAL_MAPPING[signal];
+    if (!mapping) continue;
+
+    try {
+      await db.conversionAnalytics.upsert({
+        where: {
+          signalType_signalValue: {
+            signalType: mapping.type,
+            signalValue: mapping.value,
+          },
+        },
+        update: {
+          totalLeads: { increment: 1 },
+          lastUpdatedAt: new Date(),
+        },
+        create: {
+          signalType: mapping.type,
+          signalValue: mapping.value,
+          totalLeads: 1,
+          convertedLeads: 0,
+          conversionRate: 0,
+          sampleSize: 1,
+        },
+      });
+    } catch (error) {
+      console.error(`Failed to track lead scored for signal ${signal}:`, error);
     }
   }
 }
@@ -112,8 +136,32 @@ export async function trackConversion(leadId: string) {
   const signals = extractSignals(lead);
 
   for (const signal of signals) {
-    if (conversionData[signal]) {
-      conversionData[signal].converted++;
+    const mapping = SIGNAL_MAPPING[signal];
+    if (!mapping) continue;
+
+    try {
+      await db.conversionAnalytics.upsert({
+        where: {
+          signalType_signalValue: {
+            signalType: mapping.type,
+            signalValue: mapping.value,
+          },
+        },
+        update: {
+          convertedLeads: { increment: 1 },
+          lastUpdatedAt: new Date(),
+        },
+        create: {
+          signalType: mapping.type,
+          signalValue: mapping.value,
+          totalLeads: 1,
+          convertedLeads: 1,
+          conversionRate: 100,
+          sampleSize: 1,
+        },
+      });
+    } catch (error) {
+      console.error(`Failed to track conversion for signal ${signal}:`, error);
     }
   }
 }
@@ -122,6 +170,8 @@ export async function trackConversion(leadId: string) {
  * Get learned weights from conversion analytics
  */
 export async function getLearnedWeights(): Promise<SignalWeights> {
+  const { db } = await import("@/lib/db");
+  
   const weights: SignalWeights = {
     domainCompany: 20, // Default weights
     domainPersonal: 10,
@@ -131,28 +181,38 @@ export async function getLearnedWeights(): Promise<SignalWeights> {
     recencyRecent: 20,
   };
 
-  // Calculate multipliers based on conversion rates
-  const baselineRate = 5; // Baseline 5% conversion rate
+  try {
+    // Fetch all conversion analytics from database
+    const analytics = await db.conversionAnalytics.findMany({
+      where: {
+        sampleSize: { gte: 10 }, // Only use signals with sufficient data
+      },
+    });
 
-  for (const [key, data] of Object.entries(conversionData)) {
-    if (data.total < 10) continue; // Only use signals with sufficient data
+    // Calculate multipliers based on conversion rates
+    const baselineRate = 5; // Baseline 5% conversion rate
 
-    const conversionRate = (data.converted / data.total) * 100;
-    const multiplier = Math.max(0.5, Math.min(2, conversionRate / baselineRate));
+    for (const record of analytics) {
+      if (record.totalLeads < 10) continue;
 
-    if (key === "domain_company") {
-      weights.domainCompany = Math.round(20 * multiplier);
-    } else if (key === "domain_personal") {
-      weights.domainPersonal = Math.round(10 * multiplier);
-    } else if (key === "intent_urgent") {
-      weights.intentUrgent = Math.round(27 * multiplier);
-    } else if (key === "intent_specific") {
-      weights.intentSpecific = Math.round(20 * multiplier);
-    } else if (key === "source_referral") {
-      weights.sourceReferral = Math.round(15 * multiplier);
-    } else if (key === "recency_recent") {
-      weights.recencyRecent = Math.round(20 * multiplier);
+      const multiplier = Math.max(0.5, Math.min(2, record.conversionRate / baselineRate));
+
+      if (record.signalType === "domain_company") {
+        weights.domainCompany = Math.round(20 * multiplier);
+      } else if (record.signalType === "domain_personal") {
+        weights.domainPersonal = Math.round(10 * multiplier);
+      } else if (record.signalType === "intent_urgent") {
+        weights.intentUrgent = Math.round(27 * multiplier);
+      } else if (record.signalType === "intent_specific") {
+        weights.intentSpecific = Math.round(20 * multiplier);
+      } else if (record.signalType === "source_referral") {
+        weights.sourceReferral = Math.round(15 * multiplier);
+      } else if (record.signalType === "recency_recent") {
+        weights.recencyRecent = Math.round(20 * multiplier);
+      }
     }
+  } catch (error) {
+    console.error("Failed to fetch conversion analytics:", error);
   }
 
   return weights;
@@ -162,17 +222,26 @@ export async function getLearnedWeights(): Promise<SignalWeights> {
  * Get conversion benchmarks for display
  */
 export async function getConversionBenchmarks(): Promise<ConversionBenchmark[]> {
+  const { db } = await import("@/lib/db");
   const benchmarks: ConversionBenchmark[] = [];
 
-  for (const [key, data] of Object.entries(conversionData)) {
-    if (data.total >= 5) {
+  try {
+    const analytics = await db.conversionAnalytics.findMany({
+      where: {
+        sampleSize: { gte: 5 },
+      },
+    });
+
+    for (const record of analytics) {
       benchmarks.push({
-        signal: key,
-        value: key,
-        conversionRate: (data.converted / data.total) * 100,
-        sampleSize: data.total,
+        signal: record.signalType,
+        value: record.signalValue,
+        conversionRate: record.conversionRate,
+        sampleSize: record.sampleSize,
       });
     }
+  } catch (error) {
+    console.error("Failed to fetch conversion benchmarks:", error);
   }
 
   return benchmarks.sort((a, b) => b.conversionRate - a.conversionRate);

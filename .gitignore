@@ -1,41 +1,50 @@
+```gitignore
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+
 # Dependencies
 node_modules/
-.pnp/
-.pnp.js
-
-# Build
-.next/
-out/
-dist/
-build/
-
-# Misc
-.DS_Store
-*.pem
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local env files
+venv/
+.venv/
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+*.env.*
 
-# Vercel
-.vercel
+# Logs and temp files
+*.log
+*.tmp
+*.swp
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
+# Editors
+.vscode/
+.idea/
 
-# Prisma
-prisma/*.db
+# Build outputs
+dist/
+build/
+target/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
-/src/generated/prisma
-
-# Test Coverage
+# Coverage
 coverage/
+htmlcov/
+.coverage
+
+# Cache
+.mypy_cache/
+.pytest_cache/
+.gradle/
+julia-*/
+zig*/
+
+# System files
+.DS_Store
+Thumbs.db
+```

@@ -10,6 +10,35 @@ interface RateLimitStore {
 }
 
 const store = new Map<string, RateLimitStore>();
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+/**
+ * Start the cleanup interval for expired rate limit entries
+ * Should be called once at application startup
+ */
+export function startCleanupInterval(): void {
+  if (!cleanupInterval && typeof setInterval !== 'undefined') {
+    cleanupInterval = setInterval(cleanupExpiredEntries, 5 * 60 * 1000);
+  }
+}
+
+/**
+ * Stop the cleanup interval
+ * Should be called on application shutdown
+ */
+export function stopCleanupInterval(): void {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
+
+/**
+ * Get the current cleanup interval ID (for testing purposes)
+ */
+export function getCleanupInterval(): NodeJS.Timeout | null {
+  return cleanupInterval;
+}
 
 interface RateLimitResult {
   success: boolean;
@@ -106,6 +135,8 @@ export function cleanupExpiredEntries(): void {
 }
 
 // Clean up expired entries every 5 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(cleanupExpiredEntries, 5 * 60 * 1000);
+// Note: Call startCleanupInterval() at application startup instead of auto-starting
+// to prevent multiple intervals in development hot-reload scenarios
+if (typeof setInterval !== 'undefined' && !cleanupInterval) {
+  startCleanupInterval();
 }
