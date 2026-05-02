@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
+import { get, set } from "@/lib/cache";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -61,5 +62,50 @@ export async function generateText(
   } catch (error) {
     console.error("AI text generation failed:", error);
     return null;
+  }
+}
+
+/**
+ * Cache key generator for AI operations
+ */
+export function generateAiCacheKey(operation: string, inputs: Record<string, unknown>): string {
+  const sortedInputs = Object.entries(inputs)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}:${String(v).substring(0, 50)}`)
+    .join('|');
+  
+  return `ai:${operation}:${sortedInputs}`;
+}
+
+/**
+ * Wraps AI operations with caching to reduce API calls and costs
+ * @param cacheKey - Unique cache key for this operation
+ * @param operation - The AI operation to perform
+ * @param ttlSeconds - Time to live in seconds (default: 1 hour)
+ * @returns Cached result or fresh result from AI
+ */
+export async function cacheAiOperation<T>(
+  cacheKey: string,
+  operation: () => Promise<T | null>,
+  ttlSeconds: number = 3600
+): Promise<T | null> {
+  try {
+    // Try to get from cache first
+    const cached = await get<T>(cacheKey);
+    if (cached !== null && cached !== undefined) {
+      return cached;
+    }
+    
+    // Execute operation and cache result
+    const result = await operation();
+    if (result !== null) {
+      await set(cacheKey, result, ttlSeconds);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("Cache operation failed, falling back to direct AI call:", error);
+    // Fallback to direct operation without caching
+    return await operation();
   }
 }

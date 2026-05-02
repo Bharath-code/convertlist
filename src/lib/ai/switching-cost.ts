@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { generateStructuredOutput } from "./client";
+import { generateStructuredOutput, cacheAiOperation } from "./client";
 import { getCompetitorById } from '../competitors/database';
 
 export interface SwitchingCostFactors {

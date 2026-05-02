@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { generateStructuredOutput } from "./client";
+import { generateStructuredOutput, cacheAiOperation } from "./client";
 import { getCompetitorById, getAllCompetitorIds } from '../competitors/database';
 
 export interface FeatureGap {

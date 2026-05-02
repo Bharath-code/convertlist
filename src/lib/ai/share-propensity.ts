@@ -5,8 +5,15 @@
  */
 
 import { z } from "zod";
-import { generateStructuredOutput } from "./client";
+import { generateStructuredOutput, cacheAiOperation } from "./client";
 
+
+const sharePropensitySchema = z.object({
+  sharePropensity: z.number().min(0).max(1),
+  enthusiasmLevel: z.enum(["high", "medium", "low"]),
+  communityMentions: z.array(z.string()),
+  confidence: z.number().min(0).max(1),
+});
 
 export interface SharePropensityResult {
   sharePropensity: number;
@@ -32,7 +39,6 @@ export async function detectSharePropensity(
   }
 
   try {
-
     const prompt = `You are a social media expert. Analyze signup note to determine share propensity.
 
 EXAMPLES:
@@ -59,32 +65,24 @@ Current lead:
 - Signup note: "${signupNote}"
 - Company: ${company || "N/A"}
 
-Return ONLY valid JSON matching this schema:
-{"sharePropensity": number, "enthusiasmLevel": "high"|"medium"|"low", "communityMentions": string[], "confidence": number}`;
+Return ONLY valid JSON matching this schema:`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
-    
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        const parsed = JSON.parse(match[0]);
-        const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.5;
-        const shareScore = typeof parsed.sharePropensity === 'number' ? parsed.sharePropensity : 0.5;
-        const validEnthusiasm = ["high", "medium", "low"].includes(parsed.enthusiasmLevel) ? parsed.enthusiasmLevel : "medium";
-        
-        return {
-          sharePropensity: Math.min(Math.max(shareScore, 0), 1),
-          enthusiasmLevel: validEnthusiasm,
-          communityMentions: Array.isArray(parsed.communityMentions) ? parsed.communityMentions : [],
-          confidence: Math.min(Math.max(confidence, 0), 1),
-        };
-      } catch (e) {
-        console.error('Failed to parse JSON:', e);
-      }
+    const result = await cacheAiOperation(
+      `share-propensity:${signupNote.substring(0, 50)}:${company || 'none'}`,
+      () => generateStructuredOutput(prompt, sharePropensitySchema),
+      3600 // Cache for 1 hour
+    );
+
+    if (!result) {
+      return fallbackSharePropensity(signupNote);
     }
 
-    return fallbackSharePropensity(signupNote);
+    return {
+      sharePropensity: Math.min(Math.max(result.sharePropensity, 0), 1),
+      enthusiasmLevel: result.enthusiasmLevel,
+      communityMentions: result.communityMentions,
+      confidence: Math.min(Math.max(result.confidence, 0), 1),
+    };
   } catch (error) {
     console.error("Failed to detect share propensity:", error);
     return fallbackSharePropensity(signupNote);

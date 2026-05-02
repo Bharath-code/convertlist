@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { generateStructuredOutput } from "./client";
+import { generateStructuredOutput, cacheAiOperation } from "./client";
 import type { CrossProductBehavior } from '../multi-product/behavior';
 import type { EarlyAdopterProfile } from '../multi-product/early-adopter';
 

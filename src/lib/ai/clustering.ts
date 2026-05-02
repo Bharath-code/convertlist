@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { generateStructuredOutput } from "./client";
+import { generateStructuredOutput, cacheAiOperation } from "./client";
 
 export interface ClusterResult {
   useCaseCluster: string;

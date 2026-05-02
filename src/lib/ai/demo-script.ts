@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { generateStructuredOutput } from "./client";
+import { generateStructuredOutput, cacheAiOperation } from "./client";
 import { mapFeatures, getDemoOrder } from "./feature-mapping";
 import { detectObjections } from "./objection-handling";
 import { predictTimeline } from "./timeline-prediction";
