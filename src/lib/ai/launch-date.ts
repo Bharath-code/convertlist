@@ -4,7 +4,8 @@
  * Uses AI to recommend optimal launch dates based on engagement patterns and seasonality.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import type { LaunchReadinessScore } from '../launch/readiness';
 
 export interface LaunchDateRecommendation {
@@ -22,8 +23,6 @@ export async function recommendLaunchDate(
   currentSeason: string,
   targetAudience: string
 ): Promise<LaunchDateRecommendation> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const prompt = `Recommend an optimal launch date based on the following information:
 

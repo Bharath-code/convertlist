@@ -5,7 +5,8 @@
  * Considers data migration, learning curve, integration dependencies, and pricing.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import { getCompetitorById } from '../competitors/database';
 
 export interface SwitchingCostFactors {
@@ -70,8 +71,6 @@ async function analyzeSwitchingCostWithAI(
   signupNote?: string,
   companySize?: string
 ): Promise<SwitchingCostAnalysis> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const prompt = `Analyze the switching cost for a user currently using ${competitor.name}.
 

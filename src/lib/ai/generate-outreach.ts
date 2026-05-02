@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 type Lead = {
   email: string;
@@ -22,7 +22,6 @@ export async function generateOutreach(
   lead: Lead,
   steps: SequenceStep[]
 ): Promise<Array<{ subject: string; body: string }>> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
   const results = [];
 

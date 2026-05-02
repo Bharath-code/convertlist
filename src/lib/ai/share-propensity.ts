@@ -4,9 +4,9 @@
  * Analyzes signup note enthusiasm, language patterns, community mentions.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface SharePropensityResult {
   sharePropensity: number;
@@ -32,7 +32,6 @@ export async function detectSharePropensity(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `You are a social media expert. Analyze signup note to determine share propensity.
 

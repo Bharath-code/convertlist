@@ -5,9 +5,9 @@
  * (e.g., "Struggling with X", "Need Y feature")
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface PainPointResult {
   painPointTribe: string;
@@ -41,7 +41,6 @@ export async function detectPainPointTribe(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `You are a customer research expert. Analyze this signup note and identify the PRIMARY pain point.
 

@@ -5,7 +5,8 @@
  * Uses AI to create personalized messaging based on competitor analysis.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import { getCompetitorById } from '../competitors/database';
 import type { SwitchingCostAnalysis } from './switching-cost';
 
@@ -40,8 +41,6 @@ export async function generateCompetitorOutreach(
     throw new Error(`Competitor ${request.competitorId} not found`);
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const switchingDifficulty = request.switchingCostAnalysis
     ? request.switchingCostAnalysis.overallCost === 'low'

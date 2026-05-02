@@ -5,7 +5,8 @@
  * Identifies unique value propositions and differentiation opportunities.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import { getCompetitorById, getAllCompetitorIds } from '../competitors/database';
 
 export interface FeatureGap {
@@ -33,8 +34,6 @@ export async function extractFeaturesFromNotes(
     return [];
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const prompt = `Analyze these signup notes and extract specific features or capabilities that users are looking for. Return only a comma-separated list of unique features.
 

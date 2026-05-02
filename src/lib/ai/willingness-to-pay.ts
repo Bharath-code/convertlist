@@ -4,9 +4,9 @@
  * Analyzes signup notes for budget mentions, company size, role indicators.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface WillingnessToPayResult {
   willingnessToPayScore: number;
@@ -43,7 +43,7 @@ export async function detectWillingnessToPay(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    
 
     const prompt = `You are a pricing expert. Analyze lead data to determine willingness to pay.
 

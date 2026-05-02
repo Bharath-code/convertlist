@@ -4,9 +4,9 @@
  * Predicts purchase timeline based on lead signals (urgency, budget, role).
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface TimelinePredictionResult {
   timelinePrediction: string;
@@ -36,7 +36,6 @@ export async function predictTimeline(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `You are a sales expert. Predict when this lead is likely to purchase based on their signals.
 

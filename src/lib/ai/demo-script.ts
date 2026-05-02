@@ -5,12 +5,12 @@
  * to generate a cohesive demo script for each lead.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import { mapFeatures, getDemoOrder } from "./feature-mapping";
 import { detectObjections } from "./objection-handling";
 import { predictTimeline } from "./timeline-prediction";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface DemoScriptResult {
   demoScript: string;
@@ -38,7 +38,6 @@ export async function generateDemoScript(
     ]);
 
     // Generate cohesive script using AI
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `You are an expert sales trainer. Generate a demo script for this lead.
 

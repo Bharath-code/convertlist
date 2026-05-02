@@ -5,7 +5,8 @@
  * Uses AI to create VIP treatment messaging.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import type { SuperUserScore } from '../multi-product/super-user';
 import type { LifetimeValuePrediction } from './lifetime-value';
 
@@ -32,8 +33,6 @@ export interface SuperUserOutreachRequest {
 export async function generateSuperUserOutreach(
   request: SuperUserOutreachRequest
 ): Promise<SuperUserOutreachTemplate> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const tierPerks = getTierPerks(request.superUserScore.tier, request.availablePerks);
 

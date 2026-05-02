@@ -5,7 +5,8 @@
  * Uses AI to estimate long-term revenue potential.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import type { CrossProductBehavior } from '../multi-product/behavior';
 import type { EarlyAdopterProfile } from '../multi-product/early-adopter';
 
@@ -31,8 +32,6 @@ export async function predictLifetimeValue(
   earlyAdopterProfile: EarlyAdopterProfile,
   averageRevenuePerProduct: number = 100
 ): Promise<LifetimeValuePrediction> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const prompt = `Predict the lifetime value (LTV) for a customer based on their behavior.
 

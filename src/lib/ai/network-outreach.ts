@@ -5,7 +5,8 @@
  * Uses AI to create personalized messaging based on network relationships.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 import type { CompanyRelationshipAnalysis } from '../network/company-relationships';
 import type { CommunityOverlap } from '../network/community-overlap';
 import type { InfluenceScore } from '../network/influence-score';
@@ -35,8 +36,6 @@ export interface NetworkOutreachRequest {
 export async function generateNetworkOutreach(
   request: NetworkOutreachRequest
 ): Promise<NetworkOutreachTemplate> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const connectionSummary = buildConnectionSummary(
     request.companyRelationships,

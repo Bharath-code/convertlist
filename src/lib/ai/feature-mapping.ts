@@ -4,9 +4,9 @@
  * Maps lead's mentioned problems to product features and prioritizes demo order.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface FeatureMappingResult {
   featurePriority: string;
@@ -40,7 +40,6 @@ export async function mapFeatures(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `You are a product expert. Map lead needs to product features.
 

@@ -5,9 +5,9 @@
  * and generates handling scripts.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { generateStructuredOutput } from "./client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface ObjectionHandlingResult {
   objectionHandling: string;
@@ -39,7 +39,6 @@ export async function detectObjections(
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `You are a sales expert. Analyze this lead's signup note and identify potential objections.
 
