@@ -6,6 +6,7 @@
  *   1. fires confetti (subtle, top-center origin)
  *   2. shows a slide-in toast with the lead's name + jump-to-link
  *   3. updates a small dot in the corner indicating "live"
+ *   4. opens the ReplyDraftModal so the user can generate a follow-up
  *
  * Mount this once in any protected layout. The SSE connection is auth'd
  * via cookies (Clerk) so there's no extra wiring.
@@ -16,7 +17,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight, Sparkles, X } from "lucide-react";
 import { fireConfetti } from "./confetti";
+import { ReplyDraftModal } from "./reply-draft-modal";
 
 interface IncomingReply {
   leadId: string;
@@ -26,6 +29,7 @@ interface IncomingReply {
   status: "REPLIED" | "INTERESTED" | "PAID";
   waitlistId: string;
   waitlistName: string;
+  replySnippet?: string;
   updatedAt: string;
 }
 
@@ -41,9 +45,16 @@ const STATUS_ACCENT: Record<IncomingReply["status"], string> = {
   PAID: "text-amber-300",
 };
 
+const STATUS_DOT: Record<IncomingReply["status"], string> = {
+  REPLIED: "from-emerald-400/30 to-violet-400/20",
+  INTERESTED: "from-violet-400/30 to-fuchsia-400/20",
+  PAID: "from-amber-400/30 to-orange-400/20",
+};
+
 export function RepliesLive() {
   const [connected, setConnected] = useState(false);
   const [recent, setRecent] = useState<IncomingReply[]>([]);
+  const [draftFor, setDraftFor] = useState<IncomingReply | null>(null);
   const seenRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -72,10 +83,10 @@ export function RepliesLive() {
           setRecent((prev) => [data, ...prev].slice(0, 5));
           fireConfetti({ origin: { x: 0.5, y: 0.3 }, particleCount: 60 });
 
-          // Auto-fade after 8s
+          // Auto-fade after 12s
           window.setTimeout(() => {
             setRecent((prev) => prev.filter((r) => r.leadId !== data.leadId));
-          }, 8000);
+          }, 12000);
         } catch {
           /* malformed */
         }
@@ -88,6 +99,10 @@ export function RepliesLive() {
       if (retryTimer) window.clearTimeout(retryTimer);
     };
   }, []);
+
+  const dismiss = (leadId: string) => {
+    setRecent((prev) => prev.filter((r) => r.leadId !== leadId));
+  };
 
   return (
     <>
@@ -124,13 +139,12 @@ export function RepliesLive() {
               exit={{ opacity: 0, y: -16, scale: 0.96, filter: "blur(8px)" }}
               transition={{ duration: 0.55, ease: [0.32, 0.72, 0, 1] }}
             >
-              <Link
-                href={`/results/${r.waitlistId}?lead=${r.leadId}`}
-                className="block rounded-3xl border border-white/10 bg-black/70 p-4 backdrop-blur-2xl shadow-[0_8px_60px_-12px_rgba(0,0,0,0.8)] hover:border-emerald-400/30 transition-colors duration-500"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="size-9 shrink-0 rounded-full bg-gradient-to-br from-emerald-400/30 to-violet-400/20 border border-white/10 flex items-center justify-center text-xs">
-                    🎉
+              <div className="group rounded-3xl border border-white/10 bg-black/70 backdrop-blur-2xl shadow-[0_8px_60px_-12px_rgba(0,0,0,0.8)] hover:border-emerald-400/30 transition-colors duration-500">
+                <div className="p-4 flex items-start gap-3">
+                  <div
+                    className={`size-9 shrink-0 rounded-full bg-gradient-to-br ${STATUS_DOT[r.status]} border border-white/10 flex items-center justify-center`}
+                  >
+                    <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-sm">
@@ -148,12 +162,52 @@ export function RepliesLive() {
                       <span className="text-white/60">{r.waitlistName}</span>
                     </div>
                   </div>
+                  <button
+                    onClick={() => dismiss(r.leadId)}
+                    className="shrink-0 size-7 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors duration-300 active:scale-[0.96] flex items-center justify-center"
+                    aria-label="Dismiss"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </Link>
+                <div className="px-4 pb-4 flex items-center gap-2">
+                  <button
+                    onClick={() => setDraftFor(r)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 text-xs font-medium text-white transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Draft a reply
+                  </button>
+                  <Link
+                    href={`/results/${r.waitlistId}?lead=${r.leadId}`}
+                    onClick={() => dismiss(r.leadId)}
+                    className="size-8 inline-flex items-center justify-center rounded-full bg-white text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.96] hover:scale-105"
+                    aria-label="Open"
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+
+      <ReplyDraftModal
+        open={!!draftFor}
+        onClose={() => setDraftFor(null)}
+        leadId={draftFor?.leadId ?? ""}
+        leadName={draftFor?.name ?? null}
+        leadEmail={draftFor?.email ?? ""}
+        replyText={draftFor?.replySnippet ?? "They replied to your outreach."}
+        initialIntent={
+          draftFor?.status === "INTERESTED"
+            ? "interested"
+            : draftFor?.status === "PAID"
+              ? "interested"
+              : undefined
+        }
+      />
     </>
   );
 }

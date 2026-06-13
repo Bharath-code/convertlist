@@ -119,7 +119,6 @@ beforeEach(() => {
   integrationRecord = null;
   sendCalls.length = 0;
   process.env.GEMINI_API_KEY = "test";
-  process.env.NODE_ENV = "test";
 });
 
 // Mock Clerk auth

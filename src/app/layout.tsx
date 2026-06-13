@@ -82,36 +82,60 @@ export default function RootLayout({
     <ClerkProvider>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <CollaborationProvider>
-          <html lang="en" className={cn(geist.variable, playfairDisplay.variable, dmSans.variable)} suppressHydrationWarning>
-            <body className="antialiased">
+          <html
+            lang="en"
+            className={cn(geist.variable, playfairDisplay.variable, dmSans.variable)}
+            suppressHydrationWarning
+          >
+            <body
+              className="antialiased subpixel-antialiased"
+              style={{
+                WebkitFontSmoothing: "antialiased",
+                MozOsxFontSmoothing: "grayscale",
+                textRendering: "optimizeLegibility",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
               {children}
               <LiveCursors />
               <PresenceList />
               <Toaster
                 position="top-right"
                 toastOptions={{
-                  success: { 
+                  success: {
                     duration: 3000,
-                    icon: '✅',
                     style: {
-                      background: '#10b981',
-                      color: '#fff',
+                      background: "rgba(16, 185, 129, 0.95)",
+                      color: "#fff",
+                      backdropFilter: "blur(24px)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "9999px",
+                      fontSize: "13px",
+                      padding: "10px 18px",
                     },
                   },
-                  error: { 
+                  error: {
                     duration: 5000,
-                    icon: '❌',
                     style: {
-                      background: '#ef4444',
-                      color: '#fff',
+                      background: "rgba(239, 68, 68, 0.95)",
+                      color: "#fff",
+                      backdropFilter: "blur(24px)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "9999px",
+                      fontSize: "13px",
+                      padding: "10px 18px",
                     },
                   },
                   loading: {
                     duration: Infinity,
-                    icon: '⏳',
                     style: {
-                      background: '#6366f1',
-                      color: '#fff',
+                      background: "rgba(99, 102, 241, 0.95)",
+                      color: "#fff",
+                      backdropFilter: "blur(24px)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "9999px",
+                      fontSize: "13px",
+                      padding: "10px 18px",
                     },
                   },
                 }}
