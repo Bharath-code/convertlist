@@ -18,7 +18,9 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   waitlists Waitlist[]
-  
+  integrations Integration[]
+  outreachSends OutreachSend[]
+
   // Multi-Product Intelligence fields (M1)
   productHistory        String?
   crossProductBehavior  String?
@@ -27,6 +29,53 @@ model User {
 
   @@index([clerkId])
   @@index([email])
+}
+
+model Integration {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider    String   // "instantly" | "slack" | "discord" | "gmail"
+  enabled     Boolean  @default(true)
+
+  // Encrypted secrets (AES-256-GCM; stored as base64 {iv}.{tag}.{cipher})
+  accessTokenEnc  String?
+  refreshTokenEnc String?
+  webhookSecretEnc String?
+
+  // Provider-specific public config
+  config      String?  // JSON: { fromEmail, accountId, defaultCampaignId, webhookUrl, ... }
+
+  // Status tracking
+  lastSyncedAt DateTime?
+  lastErrorAt DateTime?
+  lastError   String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+}
+
+model OutreachSend {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  waitlistId    String
+  waitlist      Waitlist @relation(fields: [waitlistId], references: [id], onDelete: Cascade)
+  instantlyCampaignId String?
+  fromEmail     String
+  leadCount     Int
+  status        String   // "pending" | "launched" | "failed"
+  errorMessage  String?
+  launchedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([waitlistId])
+  @@index([instantlyCampaignId])
 }
 
 model Waitlist {
@@ -40,7 +89,8 @@ model Waitlist {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   leads          Lead[]
-  
+  outreachSends  OutreachSend[]
+
   // Launch Day Command Center fields (L1)
   launchReadinessScore   Float?
   recommendedLaunchDate   DateTime?

@@ -1,61 +1,55 @@
-import { NextResponse } from "next/server";
+/**
+ * Email-forwarding reply webhook (the original Phase 1 approach).
+ *
+ * Resend's inbound parse (or any other provider) POSTs to this endpoint when
+ * a lead replies to their `lead_<id>@reply.convertlist.ai` forwarder.
+ *
+ * This route is now a thin shim over `recordReply` so reply detection
+ * behaves identically regardless of source.
+ */
 
-export const dynamic = 'force-dynamic';
+import { NextResponse } from "next/server";
+import { recordReply } from "@/lib/integrations/reply-detector";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { lead_id, event, timestamp, email, from } = body;
+    const body = await req.json().catch(() => ({}));
+    const { lead_id, email, from, text, snippet } = body as {
+      lead_id?: string;
+      email?: string;
+      from?: string;
+      text?: string;
+      snippet?: string;
+    };
 
-    let leadId = lead_id;
-
-    const { db } = await import("@/lib/db");
-
-    if (!leadId && email) {
-      const lead = await db.lead.findFirst({
-        where: {
-          OR: [
-            { email: email.toLowerCase() },
-            { replyForwarder: email.toLowerCase() },
-          ],
-        },
-        orderBy: { importedAt: "desc" },
-      });
-      if (lead) leadId = lead.id;
+    const lookupEmail = (email || from || "").toLowerCase();
+    if (!lead_id && !lookupEmail) {
+      return NextResponse.json({ error: "Missing lead identifier" }, { status: 400 });
     }
 
-    if (!leadId) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    const result = await recordReply({
+      leadId: lead_id,
+      email: lookupEmail || undefined,
+      replyText: text || snippet,
+      source: "email_forward",
+    });
+
+    if (!result.found) {
+      return NextResponse.json({ ok: true, matched: false }, { status: 202 });
     }
 
-    const lead = await db.lead.findUnique({ where: { id: leadId } });
-    if (!lead) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
-    }
-
-    if (event === "reply" || event === "click" || from) {
-      const prevStatus = lead.status;
-
-      await db.$transaction([
-        db.lead.update({
-          where: { id: leadId },
-          data: {
-            status: "REPLIED",
-            replyForwarder: lead.replyForwarder || email || null,
-          },
-        }),
-        db.leadStatusHistory.create({
-          data: {
-            leadId,
-            fromStatus: prevStatus,
-            toStatus: "REPLIED",
-          },
-        }),
-      ]);
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({
+      ok: true,
+      updated: result.updated,
+      notified: result.notified,
+      intent: result.intent,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal error" },
+      { status: 500 }
+    );
   }
 }

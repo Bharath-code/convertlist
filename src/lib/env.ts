@@ -30,6 +30,10 @@ const envSchema = z.object({
 
   // Optional: Instantly.ai (Cold Email)
   INSTANTLY_API_KEY: z.string().optional(),
+  INSTANTLY_WEBHOOK_SECRET: z.string().optional(),
+
+  // Optional: encryption key for stored integration secrets (32-byte base64 or >=32 char string)
+  INTEGRATION_ENCRYPTION_KEY: z.string().optional(),
 
   // Optional: Clearbit (Lead Enrichment)
   CLEARBIT_API_KEY: z.string().optional(),

@@ -1,116 +1,48 @@
-import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import {
-  launchOutreachCampaign,
-  isInstantlyConfigured,
-} from "@/lib/instantly/integration";
+/**
+ * POST /api/instantly/launch-campaign
+ *
+ * Thin REST shim around the `launchOutreachForWaitlist` server action.
+ * Kept for backwards compatibility with existing UI callers; new code
+ * should call the server action directly.
+ */
 
-export const dynamic = 'force-dynamic';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { launchOutreachForWaitlist } from "@/app/actions/launch-outreach";
+
+export const dynamic = "force-dynamic";
+
+const inputSchema = z.object({
+  waitlistId: z.string().min(1),
+  leadIds: z.array(z.string().min(1)).min(1).max(500),
+  fromEmail: z.string().email().optional(),
+});
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!isInstantlyConfigured()) {
+    const body = await req.json();
+    const parsed = inputSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Instantly.ai not configured" },
+        { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 }
       );
     }
 
-    const { waitlistId, leadIds, fromEmail } = await req.json();
-
-    if (!waitlistId || !leadIds || !fromEmail) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    const result = await launchOutreachForWaitlist(parsed.data);
+    if (!result.ok) {
+      const status = result.error === "Unauthorized" ? 401 : 500;
+      return NextResponse.json({ error: result.error }, { status });
     }
-
-    const { db } = await import("@/lib/db");
-
-    // Verify user owns the waitlist
-    const waitlist = await db.waitlist.findUnique({
-      where: { id: waitlistId },
-      include: { user: true },
-    });
-
-    if (!waitlist || waitlist.user.clerkId !== userId) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    // Fetch leads with their generated outreach
-    const leads = await db.lead.findMany({
-      where: {
-        id: { in: leadIds },
-        waitlistId,
-      },
-    });
-
-    if (leads.length === 0) {
-      return NextResponse.json({ error: "No leads found" }, { status: 404 });
-    }
-
-    // Convert to Instantly format
-    const instantlyLeads = leads.map((lead) => ({
-      email: lead.email,
-      firstName: lead.name || undefined,
-      companyName: lead.company || undefined,
-    }));
-
-    // Get sequence steps from the waitlist's sequences
-    const sequences = await db.sequence.findMany({
-      where: { waitlistId },
-      include: { steps: { orderBy: { order: "asc" } } },
-    });
-
-    // Use first sequence or create default
-    const sequence = sequences[0];
-    let emailSteps;
-
-    if (sequence) {
-      emailSteps = sequence.steps.map((step) => ({
-        subject: step.subject,
-        body: step.body,
-        delayDays: step.delayDays,
-      }));
-    } else {
-      // Default single-step sequence
-      emailSteps = [
-        {
-          subject: "Quick question",
-          body: "Hey, thanks for signing up! Check out our product.",
-          delayDays: 0,
-        },
-      ];
-    }
-
-    // Launch campaign
-    const result = await launchOutreachCampaign(
-      `${waitlist.name} - Outreach`,
-      fromEmail,
-      instantlyLeads,
-      emailSteps
-    );
-
-    // Update leads to mark as contacted
-    await db.lead.updateMany({
-      where: { id: { in: leadIds } },
-      data: { status: "CONTACTED" },
-    });
 
     return NextResponse.json({
       success: true,
       campaignId: result.campaignId,
-      leadsSent: instantlyLeads.length,
+      leadsSent: result.leadCount,
     });
-  } catch (error) {
-    console.error("Instantly campaign launch error:", error);
+  } catch (err) {
     return NextResponse.json(
-      { error: "Failed to launch campaign" },
+      { error: err instanceof Error ? err.message : "Internal error" },
       { status: 500 }
     );
   }

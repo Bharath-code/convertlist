@@ -1,6 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { Suspense } from "react";
+import Link from "next/link";
 import { DashboardSkeleton } from "./dashboard-client";
+import { RepliesLive } from "@/components/replies/replies-live";
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +23,9 @@ export default async function DashboardLayout({
             <a href="/upload" className="text-sm text-slate-600 hover:text-slate-900">
               Upload
             </a>
+            <Link href="/connections" className="text-sm text-slate-600 hover:text-slate-900">
+              Connections
+            </Link>
           </nav>
         </div>
       </header>
@@ -29,6 +34,7 @@ export default async function DashboardLayout({
           {children}
         </Suspense>
       </main>
+      {userId && <RepliesLive />}
     </div>
   );
 }

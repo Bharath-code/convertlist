@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { launchOutreachForWaitlist } from "@/app/actions/launch-outreach";
 import {
   Search,
   Download,
@@ -261,31 +262,30 @@ export default function ResultsClient({
   const launchInstantlyCampaign = async () => {
     if (selectedLeads.size === 0) return;
 
-    const fromEmail = prompt("Enter your sending email address:");
-    if (!fromEmail) return;
-
     const loadingToast = toast.loading("Launching Instantly.ai campaign...");
     try {
-      const res = await fetch("/api/instantly/launch-campaign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          waitlistId: waitlist.id,
-          leadIds: Array.from(selectedLeads),
-          fromEmail,
-        }),
+      const result = await launchOutreachForWaitlist({
+        waitlistId: waitlist.id,
+        leadIds: Array.from(selectedLeads),
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to launch campaign");
+      if (!result.ok) {
+        if (result.error === "Unauthorized") {
+          toast.error("Sign in to launch campaigns", { id: loadingToast });
+          return;
+        }
+        throw new Error(result.error || "Failed to launch campaign");
       }
 
-      const data = await res.json();
-      toast.success(`Campaign launched! ${data.leadsSent} emails queued`, { id: loadingToast });
+      toast.success(
+        `Campaign launched! ${result.leadCount} emails queued · replies will appear live`,
+        { id: loadingToast, duration: 6000 }
+      );
       setSelectedLeads(new Set());
-    } catch (error: any) {
-      toast.error(error.message || "Failed to launch campaign", { id: loadingToast });
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to launch campaign";
+      toast.error(message, { id: loadingToast });
     }
   };
 
