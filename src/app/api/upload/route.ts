@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { checkAndRecord, getLimitsForPlan } from "@/lib/usage/limits";
 
 export const dynamic = 'force-dynamic';
-
-const PLAN_LEAD_LIMITS: Record<string, number> = {
-  FREE: 25,
-  PRO: 500,
-  PRO_PLUS: 5000,
-  LAUNCH: 5000,
-};
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -62,8 +56,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const limit = PLAN_LEAD_LIMITS[user.plan] ?? 25;
-    const currentUsedPromise = db.lead.count({ where: { waitlist: { userId } } });
+    const limit = getLimitsForPlan(user.plan).leadsScored;
 
     if (mode === "csv") {
       const file = formData.get("file") as File | null;
@@ -86,17 +79,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "No valid leads found" }, { status: 400 });
       }
 
-      const currentUsed = await currentUsedPromise;
-
-      if (limit !== Infinity && currentUsed + leads.length > limit) {
+      const limitCheck = await checkAndRecord(user.id, "leads_scored", leads.length);
+      if (!limitCheck.allowed) {
         return NextResponse.json(
           {
             error: "Lead limit exceeded",
-            used: currentUsed,
-            limit,
+            used: limitCheck.used,
+            limit: limitCheck.limit,
             incoming: leads.length,
             upgradeRequired: true,
-            message: `This batch has ${leads.length} leads. You have ${currentUsed}/${limit} used. Upgrade to continue.`,
+            message: `This batch has ${leads.length} leads. You have ${limitCheck.used}/${limitCheck.limit} used. Upgrade to continue.`,
           },
           { status: 403 }
         );
@@ -151,17 +143,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "No valid emails found" }, { status: 400 });
       }
 
-      const currentUsed = await currentUsedPromise;
-
-      if (limit !== Infinity && currentUsed + emails.length > limit) {
+      const limitCheck = await checkAndRecord(user.id, "leads_scored", emails.length);
+      if (!limitCheck.allowed) {
         return NextResponse.json(
           {
             error: "Lead limit exceeded",
-            used: currentUsed,
-            limit,
+            used: limitCheck.used,
+            limit: limitCheck.limit,
             incoming: emails.length,
             upgradeRequired: true,
-            message: `This batch has ${emails.length} leads. You have ${currentUsed}/${limit} used. Upgrade to continue.`,
+            message: `This batch has ${emails.length} leads. You have ${limitCheck.used}/${limitCheck.limit} used. Upgrade to continue.`,
           },
           { status: 403 }
         );

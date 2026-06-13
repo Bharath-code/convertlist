@@ -16,6 +16,7 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { decryptSecret } from "@/lib/integrations/crypto";
 import { launchOutreachCampaign, isInstantlyConfigured } from "@/lib/instantly/client";
+import { checkAndRecord } from "@/lib/usage/limits";
 
 const inputSchema = z.object({
   waitlistId: z.string().min(1),
@@ -69,6 +70,18 @@ export async function launchOutreachForWaitlist(rawInput: unknown): Promise<Laun
 
   if (waitlist.leads.length === 0) {
     return { ok: false, error: "No leads found in the requested batch" };
+  }
+
+  // Quota gate: each launch counts once against the monthly outreach budget
+  const quota = await checkAndRecord(user.id, "outreach_launched", 1);
+  if (!quota.allowed) {
+    return {
+      ok: false,
+      error:
+        quota.reason === "free_tier_exhausted"
+          ? "Outreach sending requires Pro or Launch plan"
+          : `Monthly outreach quota reached (${quota.used}/${quota.limit})`,
+    };
   }
 
   // Resolve fromEmail: request > per-user Instantly config > Clerk email

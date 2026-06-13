@@ -298,6 +298,7 @@ export default function ResultsClient({
 
   const isFreeUser = userPlan === "FREE";
   const nearLimit = isFreeUser && waitlist.totalLeads >= 20;
+  const needsInstantly = userPlan === "FREE" || userPlan === "LAUNCH";
 
   return (
     <div>
@@ -308,11 +309,29 @@ export default function ResultsClient({
               You&apos;re at {waitlist.totalLeads}/25 leads on the free plan
             </p>
             <p className="text-sm text-amber-700">
-              Upgrade to Starter for 500 leads/mo or Pro for 5,000 leads/mo
+              $97 lifetime gets you 500 leads, 3-step sequences, and live reply detection. Pro is $29/mo for 500/mo + 5-step.
             </p>
           </div>
           <Link href="/pricing">
             <Button variant="primary" size="sm">
+              See plans <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {needsInstantly && hotLeads.length > 0 && (
+        <div className="card mb-6 border border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+          <div>
+            <p className="font-medium text-white">
+              {hotLeads.length} hot {hotLeads.length === 1 ? "lead is" : "leads are"} waiting to be emailed
+            </p>
+            <p className="text-sm text-slate-300">
+              One-click Instantly send is on Pro+ ($79/mo). Or <Link href="/connections" className="underline">paste your Instantly key</Link> to launch from any plan.
+            </p>
+          </div>
+          <Link href="/pricing">
+            <Button variant="primary" size="sm" className="bg-white text-slate-900 hover:bg-slate-100">
               Upgrade <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>

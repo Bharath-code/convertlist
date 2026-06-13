@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, GripVertical, Plus, Trash2, Save } from "lucide-react";
+import { X, GripVertical, Plus, Trash2, Save, Sparkles } from "lucide-react";
+import { SEQUENCE_TEMPLATES, type SequenceTemplate } from "@/lib/sequences/templates";
 
 type Step = {
   id?: string;
@@ -15,27 +16,56 @@ type Props = {
   waitlistId: string;
   onClose: () => void;
   onSave: (name: string, steps: Step[]) => Promise<void>;
-  existingSequences?: Array<{
-    id: string;
-    name: string;
-    steps: Step[];
-  }>;
+  existingSequences?: Array<{ id: string; name: string; steps: Step[] }>;
+  /** Plan-derived max steps. Free=3, Pro/Launch=5, Pro+/Agency=unlimited */
+  maxSteps?: number;
+  senderName?: string;
+  productUrl?: string;
+  waitlistName?: string;
 };
 
-export default function SequenceBuilder({ waitlistId, onClose, onSave }: Props) {
+export default function SequenceBuilder({
+  waitlistId,
+  onClose,
+  onSave,
+  maxSteps = 5,
+  senderName = "the team",
+  productUrl = "https://your-product.com",
+  waitlistName = "our product",
+}: Props) {
   const [name, setName] = useState("My Sequence");
   const [steps, setSteps] = useState<Step[]>([
     { subject: "", body: "", delayDays: 0, order: 0 },
   ]);
   const [saving, setSaving] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const fillFromTemplate = (tpl: SequenceTemplate) => {
+    setName(tpl.name);
+    const rendered = tpl.steps.map((s, i) => ({
+      subject: s.subject
+        .replace(/\{\{senderName\}\}/g, senderName)
+        .replace(/\{\{productUrl\}\}/g, productUrl)
+        .replace(/\{\{waitlistName\}\}/g, waitlistName),
+      body: s.body
+        .replace(/\{\{senderName\}\}/g, senderName)
+        .replace(/\{\{productUrl\}\}/g, productUrl)
+        .replace(/\{\{waitlistName\}\}/g, waitlistName),
+      delayDays: s.delayDays,
+      order: i,
+    }));
+    setSteps(rendered);
+    setShowTemplates(false);
+  };
 
   const addStep = () => {
+    if (steps.length >= maxSteps) return;
     setSteps([
       ...steps,
       {
         subject: "",
         body: "",
-        delayDays: steps.length === 0 ? 0 : 1,
+        delayDays: steps.length === 0 ? 0 : 2,
         order: steps.length,
       },
     ]);
@@ -88,6 +118,37 @@ export default function SequenceBuilder({ waitlistId, onClose, onSave }: Props) 
             />
           </div>
 
+          {steps.length === 1 && !steps[0].subject && !steps[0].body && (
+            <div>
+              <button
+                onClick={() => setShowTemplates(!showTemplates)}
+                className="inline-flex items-center gap-2 text-xs font-medium text-violet-700 hover:text-violet-900 px-3 py-2 rounded-lg bg-violet-50 border border-violet-100 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Start from a proven template
+              </button>
+              {showTemplates && (
+                <div className="mt-2 grid gap-2">
+                  {SEQUENCE_TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => fillFromTemplate(tpl)}
+                      className="text-left p-3 rounded-lg border border-slate-200 hover:border-violet-300 hover:bg-violet-50/50 transition-colors"
+                    >
+                      <div className="text-sm font-medium text-slate-900">
+                        {tpl.name}
+                        <span className="ml-2 text-xs text-slate-500 font-normal">
+                          {tpl.steps.length} step{tpl.steps.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">{tpl.description}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-4">
             {steps.map((step, index) => (
               <div
@@ -129,7 +190,7 @@ export default function SequenceBuilder({ waitlistId, onClose, onSave }: Props) 
                   value={step.body}
                   onChange={(e) => updateStep(index, "body", e.target.value)}
                   className="input text-sm h-24 resize-none"
-                  placeholder="Email body. Use {'{name}'} to personalize."
+                  placeholder="Email body. Use {{first_name}} to personalize."
                 />
 
                 {index > 0 && (
@@ -151,13 +212,29 @@ export default function SequenceBuilder({ waitlistId, onClose, onSave }: Props) 
             ))}
           </div>
 
-          <button
-            onClick={addStep}
-            className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 px-2 py-1"
-          >
-            <Plus className="w-4 h-4" />
-            Add Step
-          </button>
+          {steps.length < maxSteps && (
+            <button
+              onClick={addStep}
+              className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 px-2 py-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add step
+              {maxSteps < Infinity && (
+                <span className="text-xs text-slate-400 ml-1">
+                  ({steps.length}/{maxSteps})
+                </span>
+              )}
+            </button>
+          )}
+          {steps.length >= maxSteps && maxSteps < Infinity && (
+            <p className="text-xs text-slate-500">
+              You've reached the {maxSteps}-step cap on your plan.{" "}
+              <a href="/pricing" className="underline">
+                Upgrade for more
+              </a>
+              .
+            </p>
+          )}
         </div>
 
         <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
