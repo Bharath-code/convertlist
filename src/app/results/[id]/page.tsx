@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import ResultsClient from "./results-client";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { RepliesLive } from "@/components/replies/replies-live";
 
 export default async function ResultsPage({
   params,
@@ -49,6 +50,7 @@ export default async function ResultsPage({
         top10Percent={top10Percent}
         userPlan={user?.plan ?? "FREE"}
       />
+      <RepliesLive />
     </ErrorBoundary>
   );
 }

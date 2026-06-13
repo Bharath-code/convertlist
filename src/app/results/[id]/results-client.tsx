@@ -17,6 +17,7 @@ import {
   DollarSign,
   Mail,
   ArrowRight,
+  ArrowUpRight,
   Check,
   Copy,
   FileText,
@@ -39,6 +40,7 @@ import LaunchDayCommandCenter from "@/components/launch-day-command-center";
 import ViralityAnalyticsDashboard from "@/components/virality-analytics-dashboard";
 import CompetitorInsightsDashboard from "@/components/competitor-insights-dashboard";
 import { StaggerContainer, SlideUp } from "@/components/motion";
+import { motion } from "framer-motion";
 
 type Lead = {
   id: string;
@@ -82,27 +84,6 @@ type Props = {
   userPlan?: string;
 };
 
-const segmentConfig = {
-  HOT: {
-    label: "Hot Leads",
-    icon: Flame,
-    bg: "bg-red-50",
-    border: "border-red-200",
-  },
-  WARM: {
-    label: "Warm Leads",
-    icon: Sun,
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-  },
-  COLD: {
-    label: "Cold Leads",
-    icon: Snowflake,
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-  },
-};
-
 const statusColors: Record<string, string> = {
   UNCONTACTED: "bg-slate-100 text-slate-600",
   CONTACTED: "bg-blue-100 text-blue-700",
@@ -110,6 +91,7 @@ const statusColors: Record<string, string> = {
   INTERESTED: "bg-purple-100 text-purple-700",
   PAID: "bg-yellow-100 text-yellow-700",
 };
+// (kept for legacy; LeadCard uses semantic inline classes)
 
 export default function ResultsClient({
   waitlist,
@@ -301,111 +283,116 @@ export default function ResultsClient({
   const needsInstantly = userPlan === "FREE" || userPlan === "LAUNCH";
 
   return (
-    <div>
+    <div className="relative min-h-[100dvh] bg-[#050505] text-white">
+      <div className="ambient-glow" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-6xl px-6 py-12">
       {nearLimit && (
-        <div className="card mb-6 border-2 border-amber-300 bg-amber-50 flex items-center justify-between">
+        <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] p-4 mb-6 flex items-center justify-between">
           <div>
-            <p className="font-medium text-amber-900">
-              You&apos;re at {waitlist.totalLeads}/25 leads on the free plan
+            <p className="font-medium text-amber-100">
+              You&apos;re at <span className="tabular-nums">{waitlist.totalLeads}</span>/25 leads on the free plan
             </p>
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-amber-200/70 mt-0.5">
               $97 lifetime gets you 500 leads, 3-step sequences, and live reply detection. Pro is $29/mo for 500/mo + 5-step.
             </p>
           </div>
-          <Link href="/pricing">
-            <Button variant="primary" size="sm">
-              See plans <ArrowRight className="w-4 h-4" />
-            </Button>
+          <Link
+            href="/pricing"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-300/10 hover:bg-amber-300/20 px-3.5 py-1.5 text-xs font-medium text-amber-100 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
+          >
+            See plans
+            <ArrowUpRight className="w-3 h-3 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>
       )}
 
       {needsInstantly && hotLeads.length > 0 && (
-        <div className="card mb-6 border border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.04] p-4 mb-6 flex items-center justify-between">
           <div>
             <p className="font-medium text-white">
-              {hotLeads.length} hot {hotLeads.length === 1 ? "lead is" : "leads are"} waiting to be emailed
+              <span className="tabular-nums">{hotLeads.length}</span> hot {hotLeads.length === 1 ? "lead is" : "leads are"} waiting to be emailed
             </p>
-            <p className="text-sm text-slate-300">
-              One-click Instantly send is on Pro+ ($79/mo). Or <Link href="/connections" className="underline">paste your Instantly key</Link> to launch from any plan.
+            <p className="text-sm text-white/60 mt-0.5">
+              One-click Instantly send is on Pro+ ($79/mo). Or <Link href="/connections" className="underline decoration-white/30 hover:text-white">paste your Instantly key</Link> to launch from any plan.
             </p>
           </div>
-          <Link href="/pricing">
-            <Button variant="primary" size="sm" className="bg-white text-slate-900 hover:bg-slate-100">
-              Upgrade <ArrowRight className="w-4 h-4" />
-            </Button>
+          <Link
+            href="/pricing"
+            className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Upgrade
+            <ArrowUpRight className="w-3 h-3 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-end justify-between gap-6 flex-wrap mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{waitlist.name}</h1>
-          <p className="text-slate-600 mt-1">
-            {waitlist.totalLeads} leads &middot; {hotLeads.length} hot &middot;{" "}
-            {warmLeads.length} warm &middot; {coldLeads.length} cold
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-white/60 mb-3">
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Waitlist
+          </div>
+          <h1 className="text-3xl md:text-4xl font-medium tracking-tight text-balance">
+            {waitlist.name}
+          </h1>
+          <p className="text-white/50 mt-2 text-sm tabular-nums">
+            <span className="text-white/80 font-medium">{waitlist.totalLeads}</span> leads · {hotLeads.length} hot · {warmLeads.length} warm · {coldLeads.length} cold
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
+        <div className="flex items-center gap-2">
+          <button
             onClick={exportToCSV}
+            className="group inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-3.5 py-2 text-xs font-medium text-white/70 hover:text-white transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
             aria-label="Export all leads to CSV"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
             Export
-          </Button>
-          <Link href="/dashboard">
-            <Button variant="secondary" size="sm">
-              &larr; Dashboard
-            </Button>
+          </button>
+          <Link
+            href="/dashboard"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-3.5 py-2 text-xs font-medium text-white/70 hover:text-white transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
+          >
+            Dashboard
           </Link>
-          <Link href="/upload">
-            <Button variant="primary" size="sm">
-              <RefreshCw className="w-4 h-4" />
-              New Upload
-            </Button>
+          <Link
+            href="/upload"
+            className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            New upload
           </Link>
         </div>
       </div>
 
-      <div className="card mb-6">
+      <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 mb-6">
         {/* Bulk Action Bar */}
         {selectedLeads.size > 0 && (
-          <div className="mb-4 p-3 bg-slate-900 text-white rounded-lg flex items-center justify-between">
-            <span className="text-sm font-medium">{selectedLeads.size} selected</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-300">Mark as:</span>
-              <button
-                onClick={() => bulkMarkStatus("CONTACTED")}
-                className="text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded"
-              >
-                Contacted
-              </button>
-              <button
-                onClick={() => bulkMarkStatus("REPLIED")}
-                className="text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded"
-              >
-                Replied
-              </button>
-              <button
-                onClick={() => bulkMarkStatus("INTERESTED")}
-                className="text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded"
-              >
-                Interested
-              </button>
-              <div className="w-px h-4 bg-slate-600 mx-1" />
+          <div className="mb-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.04] p-3 flex items-center justify-between flex-wrap gap-3">
+            <span className="text-sm font-medium text-white">
+              <span className="tabular-nums">{selectedLeads.size}</span> selected
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 mr-1">Mark</span>
+              {(["CONTACTED", "REPLIED", "INTERESTED"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => bulkMarkStatus(s)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] text-white/80 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.96]"
+                >
+                  {s.charAt(0) + s.slice(1).toLowerCase()}
+                </button>
+              ))}
+              <span className="size-px h-4 bg-white/10 mx-1" />
               <button
                 onClick={launchInstantlyCampaign}
-                className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-500 rounded flex items-center gap-1"
+                className="group text-xs px-3 py-1.5 rounded-full bg-emerald-400 text-black font-medium flex items-center gap-1.5 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] active:scale-[0.97]"
               >
                 <Mail className="w-3 h-3" />
                 Send via Instantly
               </button>
               <button
                 onClick={() => setSelectedLeads(new Set())}
-                className="text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded ml-2"
+                className="text-xs px-3 py-1.5 rounded-full text-white/40 hover:text-white transition-colors duration-300"
               >
                 Clear
               </button>
@@ -413,133 +400,110 @@ export default function ResultsClient({
           </div>
         )}
 
-        <div className="flex items-center gap-4 mb-4">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by email, name, or company..."
-              className="input pl-9"
+              className="w-full rounded-full border border-white/10 bg-black/40 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-emerald-400/40 focus:ring-4 focus:ring-emerald-400/10 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
               aria-label="Search leads"
             />
           </div>
           <button
             onClick={() => setShowTop10(!showTop10)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+            className={`group inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97] ${
               showTop10
-                ? "border-yellow-400 bg-yellow-50 text-yellow-700"
-                : "border-slate-200 text-slate-600 hover:border-slate-300"
+                ? "border-amber-300/40 bg-amber-300/10 text-amber-100"
+                : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05] text-white/70 hover:text-white"
             }`}
             aria-label="Toggle top 10 percent view"
           >
-            <Star className="w-4 h-4" />
+            <Star className="w-3.5 h-3.5" />
             Top 10%
           </button>
           <button
             onClick={() => setShowSequenceBuilder(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:border-slate-300 transition-colors"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-3.5 py-2 text-xs font-medium text-white/70 hover:text-white transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
             aria-label="Create email sequence"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Sequence
           </button>
         </div>
 
         {!showTop10 && (
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {/* Main Tabs */}
-            <button
-              onClick={() => setActiveTab("LEADS")}
-              onKeyDown={(e) => handleTabKeyDown(e, 0)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
-                activeTab === "LEADS"
-                  ? "bg-slate-900 border-slate-900 text-white"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-              role="tab"
-              aria-selected={activeTab === "LEADS"}
-              aria-controls="panel-leads"
-              tabIndex={focusedTab === 0 ? 0 : -1}
-            >
-              <Users className="w-4 h-4" />
-              Leads
-            </button>
-            <button
-              onClick={() => setActiveTab("INSIGHTS")}
-              onKeyDown={(e) => handleTabKeyDown(e, 1)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
-                activeTab === "INSIGHTS"
-                  ? "bg-purple-50 border-purple-200 text-slate-900"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-              role="tab"
-              aria-selected={activeTab === "INSIGHTS"}
-              aria-controls="panel-insights"
-              tabIndex={focusedTab === 1 ? 0 : -1}
-            >
-              <Flame className="w-4 h-4" />
-              Insights
-            </button>
-            <button
-              onClick={() => setActiveTab("COMPETITORS")}
-              onKeyDown={(e) => handleTabKeyDown(e, 2)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
-                activeTab === "COMPETITORS"
-                  ? "bg-orange-50 border-orange-200 text-slate-900"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-              role="tab"
-              aria-selected={activeTab === "COMPETITORS"}
-              aria-controls="panel-competitors"
-              tabIndex={focusedTab === 2 ? 0 : -1}
-            >
-              <Target className="w-4 h-4" />
-              Competitors
-            </button>
-            <button
-              onClick={() => setActiveTab("LAUNCH")}
-              onKeyDown={(e) => handleTabKeyDown(e, 3)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex-shrink-0 ${
-                activeTab === "LAUNCH"
-                  ? "bg-blue-50 border-blue-200 text-slate-900"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-              role="tab"
-              aria-selected={activeTab === "LAUNCH"}
-              aria-controls="panel-launch"
-              tabIndex={focusedTab === 3 ? 0 : -1}
-            >
-              <Rocket className="w-4 h-4" />
-              Launch
-            </button>
+          <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/[0.02] p-1 gap-1">
+            {tabs.map((tab, i) => {
+              const active = activeTab === tab;
+              const Icon =
+                tab === "LEADS" ? Users
+                : tab === "INSIGHTS" ? Flame
+                : tab === "COMPETITORS" ? Target
+                : Rocket;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  onKeyDown={(e) => handleTabKeyDown(e, i)}
+                  className={`relative px-4 py-1.5 text-xs font-medium rounded-full transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                    active ? "text-black" : "text-white/50 hover:text-white/80"
+                  }`}
+                  role="tab"
+                  aria-selected={active}
+                  aria-controls={`panel-${tab.toLowerCase()}`}
+                  tabIndex={focusedTab === i ? 0 : -1}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="results-tab"
+                      className="absolute inset-0 rounded-full bg-white"
+                      transition={{ type: "spring", duration: 0.4, bounce: 0 }}
+                    />
+                  )}
+                  <span className="relative z-10 inline-flex items-center gap-1.5">
+                    <Icon className="w-3.5 h-3.5" />
+                    {tab.charAt(0) + tab.slice(1).toLowerCase()}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
 
         {/* Segment Filter for Leads Tab */}
         {activeTab === "LEADS" && !showTop10 && (
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+          <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1">
             {(["ALL", "HOT", "WARM", "COLD"] as const).map((seg) => {
-              const c = segmentConfig[seg === "ALL" ? "HOT" : seg];
-              const count = seg === "ALL" ? hotLeads.length + warmLeads.length + coldLeads.length 
-                : seg === "HOT" ? hotLeads.length 
-                : seg === "WARM" ? warmLeads.length 
+              const count = seg === "ALL" ? hotLeads.length + warmLeads.length + coldLeads.length
+                : seg === "HOT" ? hotLeads.length
+                : seg === "WARM" ? warmLeads.length
                 : coldLeads.length;
+              const active = segmentFilter === seg;
+              const accent =
+                seg === "HOT" ? "text-rose-300"
+                : seg === "WARM" ? "text-amber-300"
+                : seg === "COLD" ? "text-sky-300"
+                : "text-white/60";
               return (
                 <button
                   key={seg}
                   onClick={() => setSegmentFilter(seg)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors flex-shrink-0 ${
-                    segmentFilter === seg
-                      ? `${c.bg} border${c.border} text-slate-900`
-                      : "border-slate-200 text-slate-600 hover:border-slate-300"
+                  className={`group relative inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-medium rounded-full transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                    active
+                      ? "bg-white/10 text-white border border-white/15"
+                      : "text-white/40 hover:text-white/70 border border-transparent"
                   }`}
                   role="tab"
-                  aria-selected={segmentFilter === seg}
+                  aria-selected={active}
                 >
-                  {seg === "ALL" ? "All" : c.label}
-                  <span className="text-xs opacity-70">({count})</span>
+                  {active && (
+                    <span className={`size-1.5 rounded-full ${accent === "text-white/60" ? "bg-white/60" : accent.replace("text-", "bg-")}`} />
+                  )}
+                  {seg === "ALL" ? "All" : seg.charAt(0) + seg.slice(1).toLowerCase()}
+                  <span className="text-white/40 tabular-nums">({count})</span>
                 </button>
               );
             })}
@@ -548,15 +512,15 @@ export default function ResultsClient({
 
         {/* Insight View Selector for Insights Tab */}
         {activeTab === "INSIGHTS" && (
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+          <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1">
             {(["TRIBES", "PRICING", "VIRALITY"] as const).map((view) => (
               <button
                 key={view}
                 onClick={() => setInsightView(view)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors flex-shrink-0 ${
+                className={`relative px-3 py-1 text-[11px] font-medium rounded-full transition-colors duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                   insightView === view
-                    ? "bg-purple-50 border-purple-200 text-slate-900"
-                    : "border-slate-200 text-slate-600 hover:border-slate-300"
+                    ? "bg-white/10 text-white border border-white/15"
+                    : "text-white/40 hover:text-white/70 border border-transparent"
                 }`}
                 role="tab"
                 aria-selected={insightView === view}
@@ -600,33 +564,57 @@ export default function ResultsClient({
         ) : activeTab === "LAUNCH" ? (
           <LaunchTimingView waitlistId={waitlist.id} />
         ) : filteredLeads.length === 0 ? (
-          <div className="card text-center py-12 text-slate-500">
-            {search ? "No leads match your search" : "No leads found"}
+          <div className="rounded-3xl border border-white/10 bg-white/[0.02] py-16 text-center">
+            <p className="text-white/50 text-sm">
+              {search ? "No leads match your search" : "No leads found"}
+            </p>
           </div>
         ) : (
           <>
-            <div className="flex gap-3 mb-2 items-center">
-              <input
-                type="checkbox"
-                checked={selectedLeads.size === filteredLeads.length && filteredLeads.length > 0}
-                onChange={selectAll}
-                className="w-4 h-4 rounded border-slate-300"
+            <div className="flex gap-3 mb-3 items-center px-1">
+              <button
+                onClick={selectAll}
+                className="group flex items-center gap-2 text-xs text-white/50 hover:text-white transition-colors duration-300"
                 aria-label="Select all leads"
-              />
-              <span className="text-sm text-slate-500">
-                {selectedLeads.size > 0 ? `${selectedLeads.size} selected` : `${filteredLeads.length} leads`}
-              </span>
+              >
+                <span
+                  className={`size-4 rounded-md border flex items-center justify-center transition-all duration-300 ${
+                    selectedLeads.size === filteredLeads.length && filteredLeads.length > 0
+                      ? "bg-white border-white"
+                      : "border-white/20 group-hover:border-white/40"
+                  }`}
+                >
+                  {selectedLeads.size === filteredLeads.length && filteredLeads.length > 0 && (
+                    <Check className="w-3 h-3 text-black" />
+                  )}
+                </span>
+                <span className="tabular-nums">
+                  {selectedLeads.size > 0
+                    ? `${selectedLeads.size} selected`
+                    : `${filteredLeads.length} leads`}
+                </span>
+              </button>
             </div>
             <StaggerContainer>
               {filteredLeads.map((lead) => (
-                <div key={lead.id} className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedLeads.has(lead.id)}
-                    onChange={() => toggleSelectLead(lead.id)}
-                    className="w-4 h-4 rounded border-slate-300 mt-1"
+                <div key={lead.id} className="flex items-stretch gap-3">
+                  <button
+                    onClick={() => toggleSelectLead(lead.id)}
+                    className="group self-stretch flex items-center pt-5"
                     aria-label={`Select ${lead.email}`}
-                  />
+                  >
+                    <span
+                      className={`size-4 rounded-md border flex items-center justify-center transition-all duration-300 ${
+                        selectedLeads.has(lead.id)
+                          ? "bg-white border-white"
+                          : "border-white/20 group-hover:border-white/40"
+                      }`}
+                    >
+                      {selectedLeads.has(lead.id) && (
+                        <Check className="w-3 h-3 text-black" />
+                      )}
+                    </span>
+                  </button>
                   <LeadCard
                     lead={lead}
                     onEnrich={() => setEnrichingLead(lead)}
@@ -699,6 +687,7 @@ export default function ResultsClient({
           }}
         />
       )}
+      </div>
     </div>
   );
 }
@@ -740,99 +729,99 @@ function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead:
   };
 
   return (
-    <div className="card border-l-4 border-l-slate-900 flex-1">
+    <div className="group rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/15 p-4 flex-1 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="font-medium text-slate-900 truncate">
+            <span className="font-medium text-white truncate">
               {lead.name || lead.email.split("@")[0]}
             </span>
             {lead.name && (
-              <span className="text-sm text-slate-500 truncate">({lead.email})</span>
+              <span className="text-sm text-white/40 truncate tabular-nums">({lead.email})</span>
             )}
             {!lead.name && (
               <button
                 onClick={handleCopyEmail}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="text-white/30 hover:text-white/70 transition-colors duration-300"
                 aria-label={`Copy ${lead.email} to clipboard`}
                 title="Copy email"
               >
                 {copied ? (
-                  <Check className="w-4 h-4 text-green-600" />
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
                 ) : (
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-3.5 h-3.5" />
                 )}
               </button>
             )}
           </div>
 
           {lead.company && (
-            <p className="text-sm text-slate-600 mb-1">{lead.company}</p>
+            <p className="text-sm text-white/60 mb-2">{lead.company}</p>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-1.5 mb-2">
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-sm font-bold ${
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium tabular-nums border ${
                 lead.segment === "HOT"
-                  ? "bg-red-100 text-red-700"
+                  ? "bg-rose-400/10 text-rose-200 border-rose-400/20"
                   : lead.segment === "WARM"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-blue-100 text-blue-700"
+                    ? "bg-amber-400/10 text-amber-200 border-amber-400/20"
+                    : "bg-sky-400/10 text-sky-200 border-sky-400/20"
               }`}
             >
               {lead.score}
             </span>
             <span
-              className={`text-xs px-2 py-0.5 rounded ${
+              className={`inline-flex items-center text-[10px] uppercase tracking-[0.2em] font-medium px-1.5 py-0.5 rounded-full border ${
                 lead.confidence === "HIGH"
-                  ? "bg-green-100 text-green-700"
+                  ? "bg-emerald-400/10 text-emerald-300 border-emerald-400/20"
                   : lead.confidence === "MEDIUM"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-slate-100 text-slate-600"
+                    ? "bg-amber-400/10 text-amber-300 border-amber-400/20"
+                    : "bg-white/5 text-white/50 border-white/10"
               }`}
             >
               {lead.confidence}
             </span>
-            <span className="text-xs text-slate-500">{lead.reason}</span>
-            
+            <span className="text-xs text-white/40">{lead.reason}</span>
+
             {/* Enrichment badges */}
             {lead.companySize && (
-              <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+              <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-white/60">
                 {lead.companySize}
               </span>
             )}
             {lead.techStack && (
-              <span className="text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">
+              <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-white/60">
                 {lead.techStack.split(',').slice(0, 2).join(', ')}
               </span>
             )}
             {lead.fundingStatus && (
-              <span className="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+              <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
                 {lead.fundingStatus}
               </span>
             )}
             {lead.socialProofScore && lead.socialProofScore > 50 && (
-              <span className="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700 flex items-center gap-1">
-                🔥 {lead.socialProofScore}
+              <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-rose-400/20 bg-rose-400/10 text-rose-300 flex items-center gap-1">
+                <Flame className="w-2.5 h-2.5" /> {lead.socialProofScore}
               </span>
             )}
-            
+
             {/* Competitor badges */}
             {lead.detectedCompetitors && (
-              <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700 flex items-center gap-1">
-                🎯 {JSON.parse(lead.detectedCompetitors).slice(0, 2).join(', ')}
+              <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-orange-400/20 bg-orange-400/10 text-orange-300 flex items-center gap-1">
+                <Target className="w-2.5 h-2.5" /> {JSON.parse(lead.detectedCompetitors).slice(0, 2).join(', ')}
               </span>
             )}
-            
+
             {/* Network relationship badges */}
             {lead.influenceScore && lead.influenceScore > 70 && (
-              <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 flex items-center gap-1">
-                ⭐ Influencer ({lead.influenceScore})
+              <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-violet-400/20 bg-violet-400/10 text-violet-300 flex items-center gap-1">
+                <Star className="w-2.5 h-2.5" /> Influencer {lead.influenceScore}
               </span>
             )}
             {lead.relatedLeads && JSON.parse(lead.relatedLeads).length > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded bg-cyan-100 text-cyan-700 flex items-center gap-1">
-                🔗 {JSON.parse(lead.relatedLeads).length} connections
+              <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-cyan-400/20 bg-cyan-400/10 text-cyan-300 flex items-center gap-1">
+                <Users className="w-2.5 h-2.5" /> {JSON.parse(lead.relatedLeads).length} connections
               </span>
             )}
           </div>
@@ -840,27 +829,27 @@ function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead:
           {expanded && (
             <div
               id={`lead-details-${lead.id}`}
-              className="mt-3 pt-3 border-t border-slate-100 space-y-2"
+              className="mt-3 pt-3 border-t border-white/10 space-y-2"
               role="region"
               aria-label="Lead details"
             >
               {lead.signupNote && (
-                <p className="text-sm text-slate-600 italic">
+                <p className="text-sm text-white/70 italic">
                   &ldquo;{lead.signupNote}&rdquo;
                 </p>
               )}
               {lead.source && (
-                <p className="text-xs text-slate-500">Source: {lead.source}</p>
+                <p className="text-xs text-white/40">Source: {lead.source}</p>
               )}
               {/* Clustering info */}
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-1.5 mt-2">
                 {lead.useCaseCluster && (
-                  <span className="text-xs px-2 py-1 rounded bg-cyan-100 text-cyan-700">
+                  <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
                     {lead.useCaseCluster}
                   </span>
                 )}
                 {lead.painPointTribe && (
-                  <span className="text-xs px-2 py-1 rounded bg-orange-100 text-orange-700">
+                  <span className="text-[10px] uppercase tracking-[0.2em] px-1.5 py-0.5 rounded-full border border-orange-400/20 bg-orange-400/10 text-orange-300">
                     {lead.painPointTribe}
                   </span>
                 )}
@@ -869,18 +858,18 @@ function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead:
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
             onClick={onGenerateDemoScript}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+            className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] text-white/60 hover:text-white transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
             title="Generate AI demo script"
           >
             <FileText className="w-3 h-3" />
-            Demo Script
+            Script
           </button>
           <button
             onClick={onEnrich}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors"
+            className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border border-amber-300/30 bg-amber-300/[0.08] hover:bg-amber-300/[0.16] text-amber-200 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
             title="Improve score accuracy"
           >
             <Zap className="w-3 h-3" />
@@ -888,32 +877,47 @@ function LeadCard({ lead, onEnrich, onCopyEmail, onGenerateDemoScript }: { lead:
           </button>
 
           <span
-            className={`text-xs px-2 py-1 rounded font-medium hidden sm:inline ${
-              statusColors[status] || "bg-slate-100 text-slate-600"
+            className={`inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-medium px-2 py-0.5 rounded-full border ${
+              status === "REPLIED"
+                ? "bg-emerald-400/10 text-emerald-300 border-emerald-400/20"
+                : status === "INTERESTED"
+                  ? "bg-violet-400/10 text-violet-300 border-violet-400/20"
+                  : status === "PAID"
+                    ? "bg-amber-400/10 text-amber-300 border-amber-400/20"
+                    : status === "CONTACTED"
+                      ? "bg-sky-400/10 text-sky-300 border-sky-400/20"
+                      : "bg-white/5 text-white/40 border-white/10"
             }`}
           >
-            {status}
+            <span className={`size-1 rounded-full ${
+              status === "REPLIED" ? "bg-emerald-400"
+                : status === "INTERESTED" ? "bg-violet-400"
+                : status === "PAID" ? "bg-amber-400"
+                : status === "CONTACTED" ? "bg-sky-400"
+                : "bg-white/30"
+            }`} />
+            {status.toLowerCase()}
           </span>
 
           {nextStatus[status] && (
             <button
               onClick={() => handleStatusChange(nextStatus[status]!)}
               disabled={updating}
-              className="text-xs px-2 py-1 rounded bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
+              className="text-[11px] px-2.5 py-1 rounded-full bg-white text-black font-medium hover:scale-[1.02] active:scale-[0.97] disabled:opacity-30 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
             >
-              {updating ? "..." : `Mark ${nextStatus[status]}`}
+              {updating ? "..." : `→ ${nextStatus[status]?.toLowerCase()}`}
             </button>
           )}
 
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
+            className="size-7 inline-flex items-center justify-center rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors duration-300 active:scale-[0.96]"
             aria-expanded={expanded}
             aria-controls={`lead-details-${lead.id}`}
             aria-label={expanded ? "Collapse lead details" : "Expand lead details"}
           >
             <ChevronRight
-              className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`}
+              className={`w-3.5 h-3.5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${expanded ? "rotate-90" : ""}`}
             />
           </button>
         </div>
@@ -938,63 +942,84 @@ function DemoScriptModal({
   onFeedback: (positive: boolean) => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">Demo Script</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        
-        <div className="p-4 flex-1 overflow-y-auto">
-          <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-            <p className="text-sm font-medium text-slate-900">{lead.name || lead.email}</p>
-            {lead.company && <p className="text-sm text-slate-600">{lead.company}</p>}
-          </div>
-          
-          {loading ? (
-            <div className="flex items-center justify-center py-8 text-slate-500">
-              <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-              Generating demo script...
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-2xl"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="rounded-[2rem] border border-white/10 bg-white/[0.02] p-1.5 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.8)]">
+          <div className="rounded-[1.625rem] border border-white/[0.06] bg-[#0a0a0a] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/60 mb-2">
+                  AI demo script
+                </div>
+                <h3 className="text-xl font-medium tracking-tight text-white text-balance">
+                  {lead.name || lead.email.split("@")[0]}
+                </h3>
+                {lead.company && (
+                  <p className="text-sm text-white/50 mt-0.5">{lead.company}</p>
+                )}
+              </div>
+              <button
+                onClick={onClose}
+                className="size-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors duration-300 active:scale-[0.96]"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-          ) : script ? (
-            <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm bg-slate-50 p-4 rounded-lg">{script}</pre>
+
+            <div className="mb-5">
+              {loading ? (
+                <div className="flex items-center justify-center gap-2 py-12 text-sm text-white/50">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Generating demo script…
+                </div>
+              ) : script ? (
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 max-h-[50vh] overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm text-white/85 leading-relaxed font-sans">
+{script}
+                  </pre>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-sm text-white/50">
+                  No demo script available
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-8 text-slate-500">
-              No demo script available
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => onFeedback(true)}
+                  className="size-9 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.02] hover:bg-emerald-400/10 hover:border-emerald-400/30 text-white/50 hover:text-emerald-300 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.96]"
+                  title="Helpful"
+                  aria-label="Helpful"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => onFeedback(false)}
+                  className="size-9 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.02] hover:bg-rose-400/10 hover:border-rose-400/30 text-white/50 hover:text-rose-300 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.96]"
+                  title="Not helpful"
+                  aria-label="Not helpful"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <button
+                onClick={onCopy}
+                disabled={!script}
+                className="group inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.01] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copy script
+              </button>
             </div>
-          )}
-        </div>
-        
-        <div className="flex items-center justify-between p-4 border-t bg-slate-50">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onFeedback(true)}
-              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded border border-slate-200 hover:bg-green-50 hover:border-green-300 transition-colors"
-              title="Helpful"
-            >
-              <ThumbsUp className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onFeedback(false)}
-              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-colors"
-              title="Not helpful"
-            >
-              <ThumbsDown className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onCopy}
-              disabled={!script}
-              className="flex items-center gap-1 text-sm px-3 py-1.5 rounded bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Copy className="w-4 h-4" />
-              Copy
-            </button>
           </div>
         </div>
       </div>
@@ -1023,8 +1048,16 @@ function LaunchTimingView({ waitlistId }: { waitlistId: string }) {
     fetchData();
   }, [waitlistId]);
 
-  if (loading) return <div className="card p-6">Loading launch timing data...</div>;
-  if (!data) return <div className="card p-6">No launch timing data available</div>;
+  if (loading) return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-sm text-white/50">
+      Loading launch timing data…
+    </div>
+  );
+  if (!data) return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-sm text-white/50">
+      No launch timing data available
+    </div>
+  );
 
   return (
     <LaunchDayCommandCenter
@@ -1059,8 +1092,16 @@ function CompetitorView({ waitlistId }: { waitlistId: string }) {
     fetchData();
   }, [waitlistId]);
 
-  if (loading) return <div className="card p-6">Loading competitor data...</div>;
-  if (!data) return <div className="card p-6">No competitor data available</div>;
+  if (loading) return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-sm text-white/50">
+      Loading competitor data…
+    </div>
+  );
+  if (!data) return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-sm text-white/50">
+      No competitor data available
+    </div>
+  );
 
   return (
     <CompetitorInsightsDashboard
@@ -1090,45 +1131,45 @@ function TribesView({
   }, {} as Record<string, Lead[]>);
 
   const clusterColors: Record<string, string> = {
-    "E-commerce": "bg-pink-50 border-pink-200",
-    "B2B SaaS": "bg-blue-50 border-blue-200",
-    "Agency": "bg-purple-50 border-purple-200",
-    "Freelancer": "bg-green-50 border-green-200",
-    "Enterprise": "bg-slate-50 border-slate-200",
-    "Startup": "bg-orange-50 border-orange-200",
-    "Content Creator": "bg-yellow-50 border-yellow-200",
-    "Developer": "bg-indigo-50 border-indigo-200",
-    "Marketing": "bg-red-50 border-red-200",
-    "Consulting": "bg-teal-50 border-teal-200",
-    "Education": "bg-cyan-50 border-cyan-200",
-    "Healthcare": "bg-rose-50 border-rose-200",
-    "Finance": "bg-emerald-50 border-emerald-200",
-    "Other": "bg-gray-50 border-gray-200",
-    "Uncategorized": "bg-gray-100 border-gray-300",
+    "E-commerce": "border-pink-400/20 bg-pink-400/5 text-pink-300",
+    "B2B SaaS": "border-sky-400/20 bg-sky-400/5 text-sky-300",
+    "Agency": "border-violet-400/20 bg-violet-400/5 text-violet-300",
+    "Freelancer": "border-emerald-400/20 bg-emerald-400/5 text-emerald-300",
+    "Enterprise": "border-white/10 bg-white/5 text-white/70",
+    "Startup": "border-orange-400/20 bg-orange-400/5 text-orange-300",
+    "Content Creator": "border-amber-400/20 bg-amber-400/5 text-amber-300",
+    "Developer": "border-indigo-400/20 bg-indigo-400/5 text-indigo-300",
+    "Marketing": "border-rose-400/20 bg-rose-400/5 text-rose-300",
+    "Consulting": "border-teal-400/20 bg-teal-400/5 text-teal-300",
+    "Education": "border-cyan-400/20 bg-cyan-400/5 text-cyan-300",
+    "Healthcare": "border-rose-400/20 bg-rose-400/5 text-rose-300",
+    "Finance": "border-emerald-400/20 bg-emerald-400/5 text-emerald-300",
+    "Other": "border-white/10 bg-white/5 text-white/60",
+    "Uncategorized": "border-white/10 bg-white/5 text-white/40",
   };
 
   return (
     <div className="space-y-4">
-      <div className="card p-4 bg-purple-50 border-purple-200">
-        <h3 className="font-semibold text-slate-900 mb-2">Tribes Overview</h3>
-        <div className="flex flex-wrap gap-2">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-3">Tribes overview</div>
+        <div className="flex flex-wrap gap-1.5">
           {Object.entries(clusters).map(([cluster, leads]) => (
             <div
               key={cluster}
-              className={`px-3 py-1.5 rounded-lg border ${clusterColors[cluster] || clusterColors["Other"]}`}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${clusterColors[cluster] || clusterColors["Other"]}`}
             >
-              <span className="font-medium">{cluster}</span>
-              <span className="ml-2 text-sm opacity-70">({leads.length})</span>
+              <span className="text-xs font-medium">{cluster}</span>
+              <span className="text-xs opacity-70 tabular-nums">({leads.length})</span>
             </div>
           ))}
         </div>
       </div>
 
       {Object.entries(clusters).map(([cluster, leads]) => (
-        <div key={cluster} className="card border-l-4 border-l-purple-600">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-slate-900">{cluster}</h4>
-            <span className="text-sm text-slate-500">{leads.length} leads</span>
+        <div key={cluster} className="rounded-2xl border border-violet-400/20 bg-white/[0.02] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-medium text-white text-balance">{cluster}</h4>
+            <span className="text-xs text-white/40 tabular-nums">{leads.length} leads</span>
           </div>
           <div className="space-y-2">
             {leads.slice(0, 5).map((lead) => (
@@ -1141,8 +1182,8 @@ function TribesView({
               />
             ))}
             {leads.length > 5 && (
-              <div className="text-center py-2 text-sm text-slate-500">
-                +{leads.length - 5} more leads in this tribe
+              <div className="text-center py-2 text-xs text-white/40 tabular-nums">
+                +{leads.length - 5} more in this tribe
               </div>
             )}
           </div>
